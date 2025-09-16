@@ -30,14 +30,17 @@ class FairseqCTranslateRunner:
         #self.modeldir4 = "witaj_ol_hsb_de_2023-02-26/"
         #self.modeldir5 = "witaj_ol_hsb_de_2023-02-28/"
         self.modeldir6 = "witaj_mm_cs_2023-05-08/"
+        self.modeldir7 = "stojanowski_jul_2025/"
         
         self.modelpath_default = {
             "hsb_de": self.modeldir1+"hsb2de/",
             "hsb_dsb": self.modeldir1+"hsb2dsb/",
             "dsb_de": self.modeldir2+"dsb2de/",
             "dsb_hsb": self.modeldir1+"dsb2hsb/",
-            "de_hsb": self.modeldir1+"de2hsb/",
-            "de_dsb": self.modeldir1+"de2dsb/",            
+            #"de_hsb": self.modeldir1+"de2hsb/",
+            "de_hsb": self.modeldir7+"de2hsb/",
+            #"de_dsb": self.modeldir1+"de2dsb/",            
+            "de_dsb": self.modeldir7+"de2dsb/",
             "cs_hsb": self.modeldir3+"cs2hsb/",
             "cs_dsb": self.modeldir3+"cs2dsb/",
             "hsb_cs": self.modeldir6+"hsb2cs/",
@@ -50,7 +53,6 @@ class FairseqCTranslateRunner:
         #fname=self.modeldir+self.modeldir4+"hsb2de/"
         #print(fname)
         #tt = ctranslate2.Translator(fname,    device="cpu") 
-
         self.translator_default = { pair: ctranslate2.Translator(self.modeldir+self.modelpath_default.get(pair), device="cpu") for pair in self.modelpath_default  }
 
         self.translator_test =    { pair: ctranslate2.Translator(self.modeldir+self.modelpath_test.get(pair),    device="cpu") for pair in self.modelpath_test  }
