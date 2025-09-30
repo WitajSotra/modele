@@ -1,6 +1,15 @@
 name: witaj_mm_hsb_cs_2023-02-17
 directions:
 - hsb_cs
+tokenizer_languages:
+  hsb: hsb
+  cs: cs
+custom_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+sentence_splitter_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+protected_pattern_file: nonbreaking_prefixes/protected_pattern
+escape_xml: false
 trainer: Marko Meškank
 traindate: '2023-02-17'
 ext: false

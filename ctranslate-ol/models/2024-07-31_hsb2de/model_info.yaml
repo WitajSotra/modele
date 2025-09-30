@@ -1,6 +1,16 @@
 name: witaj_jc_hsb_de_2024-07-31
 directions:
 - hsb_de
+tokenizer_languages:
+  de: de
+  hsb: hsb
+custom_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+  de: nonbreaking_prefixes/nonbreaking_prefix.de
+sentence_splitter_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+protected_pattern_file: nonbreaking_prefixes/protected_pattern
+escape_xml: false
 trainer: Jesus Calvillo
 traindate: '2024-07-31'
 ext: true

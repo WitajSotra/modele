@@ -1,6 +1,17 @@
 name: lmu_ds_dsb_hsb_2022-02-02
 directions:
 - dsb_hsb
+tokenizer_languages:
+  hsb: hsb
+  dsb: dsb
+custom_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+  dsb: nonbreaking_prefixes/nonbreaking_prefix.dsb
+sentence_splitter_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+  dsb: nonbreaking_prefixes/nonbreaking_prefix.dsb
+protected_pattern_file: nonbreaking_prefixes/protected_pattern
+escape_xml: false
 trainer: Dario Stojanovski
 traindate: '2022-02-02'
 ext: false

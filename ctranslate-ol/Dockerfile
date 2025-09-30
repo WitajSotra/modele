@@ -8,15 +8,18 @@ RUN pip install flask
 RUN pip install flask-cors
 RUN pip install waitress
 RUN pip install urlextract
-RUN pip install opus-fast-mosestokenizer
+RUN pip install sacremoses
 RUN pip install ctranslate2
 RUN pip install youtokentome
 RUN pip install ruamel.yaml
+RUN pip install sentence_splitter
+
 
 COPY models /app/models
 
-COPY nonbreaking_prefixes/nonbreaking_prefix.* /usr/local/lib/python3.9/site-packages/mosestokenizer/share/nonbreaking_prefixes/
-COPY nonbreaking_prefixes/protected_pattern /usr/local/lib/python3.9/site-packages/mosestokenizer/share
+#COPY nonbreaking_prefixes/nonbreaking_prefix.* /usr/local/lib/python3.9/site-packages/mosestokenizer/share/nonbreaking_prefixes/
+#COPY nonbreaking_prefixes/protected_pattern /usr/local/lib/python3.9/site-packages/mosestokenizer/share
+COPY nonbreaking_prefixes/* /app/nonbreaking_prefixes/
 
 COPY CTranslator.py /app/
 

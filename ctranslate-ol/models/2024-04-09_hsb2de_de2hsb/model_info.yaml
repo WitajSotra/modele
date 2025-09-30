@@ -2,6 +2,16 @@ name: witaj_ol_hsb_de_de_hsb_2024-04-09
 directions:
 - hsb_de
 - de_hsb
+tokenizer_languages:
+  de: de
+  hsb: hsb
+custom_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+  de: nonbreaking_prefixes/nonbreaking_prefix.de
+sentence_splitter_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+protected_pattern_file: nonbreaking_prefixes/protected_pattern
+escape_xml: false
 trainer: Olaf Langner
 traindate: '2024-04-09'
 ext: true

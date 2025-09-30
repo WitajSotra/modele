@@ -1,9 +1,15 @@
 name: stojanowski_jul_2025_de_hsb
 directions:
 - de_hsb
+tokenizer_languages:
+  de: de
+  hsb: cs
+sentence_splitter_nonbreaking_prefix_files:
+  hsb: nonbreaking_prefixes/nonbreaking_prefix.hsb
+escape_xml: true
 trainer: Johann Seltmann
 traindate: '2025-07-17'
-ext: true
-aggressive_dash_splits: true
+ext: false
+aggressive_dash_splits: false
 BLEU_score: 64.5 (altes Testset)
 TER_score: 22.6 (altes Testset)

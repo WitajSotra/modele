@@ -3,6 +3,7 @@
 import os, sys, string
 from ruamel.yaml import YAML
 from collections import defaultdict
+from sentence_splitter import SentenceSplitter
 
 os.environ["MKL_CBWR"] = "AUTO,STRICT" # Batchtranslations sollen nicht von der Übersetzung einzelner Sätze abweichen
 
@@ -89,7 +90,8 @@ import ctranslate2, logging
 ctranslate2.set_log_level(logging.INFO)
 #('off', 'critical', 'error', 'warning (default)', 'info', 'debug', 'trace')
 
-from mosestokenizer import MosesTokenizer
+#from mosestokenizer import MosesTokenizer
+from sacremoses import MosesTokenizer, MosesDetokenizer
 import youtokentome as yttm
 
 # in version.txt kann man nach Belieben eine Versionsnummer nach dem Muster des Beschreibungs-Dokuments setzen.
@@ -120,13 +122,46 @@ class model:
 		self.ext = model_info.get('ext')
 		self.BLEU_score = model_info.get('BLEU_score')
 		self.TER_score = model_info.get('TER_score')
+
 		if self.ext: self.vocabs = set(open(path + '/train_vocabulary.txt').read().split('\n'))
-		self.tokenizers=dict()
+
+		self.aggressive_dash_splits = model_info.get('aggressive_dash_splits')
+		self.escape_xml = model_info.get('escape_xml')
+		self.tokenizer_languages = model_info.get('tokenizer_languages')
+		protected_pattern_filepath = model_info.get('protected_pattern_filepath')
+		if protected_pattern_filepath:
+			with open(os.path.join("/app", protected_pattern_filepath)) as protected_pattern_file:
+				self.protected_patterns = [line.strip() for line in protected_pattern_file.readlines()]
+		else:
+			self.protected_patterns = None
+
+		self.custom_nonbreaking_prefix_files = model_info.get("custom_nonbreaking_prefix_files", dict())
+		self.sentence_splitter_nonbreaking_prefix_files = model_info.get('sentence_splitter_nonbreaking_prefix_files', dict())
+
+		self.tokenizers = dict()
+		self.detokenizers = dict()
+		self.sentence_splitters = dict()
 		for lang in set(sum([dir.split('_') for dir in self.directions], [])):
-			self.tokenizers[lang] = MosesTokenizer(lang, aggressive_dash_splits=model_info.get('aggressive_dash_splits'), url_handling=False, verbose=True) # user_dir='nonbreaking_prefixes'
+			tokenizer_language = self.tokenizer_languages[lang]
+			#self.tokenizers[lang] = MosesTokenizer(lang, aggressive_dash_splits=model_info.get('aggressive_dash_splits'), url_handling=False, verbose=True) # user_dir='nonbreaking_prefixes'
+			if lang in self.custom_nonbreaking_prefix_files:
+				prefix_file = self.custom_nonbreaking_prefix_files[lang]
+				self.tokenizers[lang] = MosesTokenizer(tokenizer_language, custom_nonbreaking_prefixes_file=prefix_file)
+			else:
+				self.tokenizers[lang] = MosesTokenizer(tokenizer_language)
+
+			self.detokenizers[lang] = MosesDetokenizer(tokenizer_language)
+
+			if lang in self.sentence_splitter_nonbreaking_prefix_files:
+				prefix_file = self.sentence_splitter_nonbreaking_prefix_files[lang]
+				self.sentence_splitters[lang] = SentenceSplitter(language='xx',
+													 non_breaking_prefix_file=prefix_file)
+			else:
+				self.sentence_splitters[lang] = SentenceSplitter(language=lang)
 
 	def s_split(self, lang, text):
-		splitted = self.tokenizers[lang].split(text.translate(str.maketrans('„“»«‚‘', '""""""')))
+		text_replace_special_chars = text.translate(str.maketrans('„“»«‚‘', '""""""'))
+		splitted = self.sentence_splitters[lang].split(text_replace_special_chars)
 		i = 0
 		for sentence in splitted:
 			yield text[i : i + len(sentence) + 1].strip()
@@ -141,7 +176,12 @@ class model:
 			sentence, maps = set_markers(sentence)
 		else:
 			maps = None
-		tok_sentence = self.tokenizers[src].tokenize(sentence)
+		tok_sentence = self.tokenizers[src].tokenize(sentence,
+											    aggressive_dash_splits=self.aggressive_dash_splits,
+												protected_patterns=self.protected_patterns,
+												escape=self.escape_xml,
+												return_str=False
+											   )
 		# tok_sentence = ' '.join(tok_sentence).replace(' '.join(list(PH_MARK)), PH_MARK).split()
 		vocabs = get_words(tok_sentence)
 		tok_sentence = [f"<{tgt}>"] + self.bpe.encode([' '.join(tok_sentence)], output_type=yttm.OutputType.SUBWORD)[0]
@@ -152,7 +192,7 @@ class model:
 	def _postprocess_sentence(self, result, tgt, fakeperiod, maps):
 		tok_translation = bpe_detokenize(result.hypotheses[0])
 		vocabs = get_words(tok_translation)
-		translation = self.tokenizers[tgt].detokenize(tok_translation)
+		translation = self.detokenizers[tgt].detokenize(tok_translation)
 		if self.ext: translation = remove_markers(translation, maps)
 		if fakeperiod: translation = translation[:-1]
 		return translation.translate(str.maketrans('', '', PH_MARK)), vocabs
@@ -196,6 +236,9 @@ class model:
 models, gui_models = {}, {}
 for direction, locations in model_config.items():
 	for i, location in enumerate(locations):
+		print(location)
+		#if location not in ["2024-08-09_de2hsb", "stojanowski_jul_2025_de_hsb"]:
+		#	continue
 		m = model(location, default = i==0)
 		models[m.name] = m
 		if i==0: gui_models[direction] = m.name
