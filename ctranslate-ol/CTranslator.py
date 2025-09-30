@@ -2,6 +2,7 @@
 
 import os, sys, string
 from ruamel.yaml import YAML
+from collections import defaultdict
 
 os.environ["MKL_CBWR"] = "AUTO,STRICT" # Batchtranslations sollen nicht von der Übersetzung einzelner Sätze abweichen
 
@@ -133,22 +134,64 @@ class model:
 			while i < len(text) and text[i] != ' ':
 				i += 1
 
-	def s_translate(self, sentence, src, tgt):
+	def _preprocess_sentence(self, sentence, src, tgt):
 		fakeperiod = sentence and not (sentence[-1] in string.punctuation + '…')
 		if fakeperiod: sentence += '.'
-		if self.ext: sentence, maps = set_markers(sentence)
+		if self.ext:
+			sentence, maps = set_markers(sentence)
+		else:
+			maps = None
 		tok_sentence = self.tokenizers[src].tokenize(sentence)
 		# tok_sentence = ' '.join(tok_sentence).replace(' '.join(list(PH_MARK)), PH_MARK).split()
 		vocabs = get_words(tok_sentence)
 		tok_sentence = [f"<{tgt}>"] + self.bpe.encode([' '.join(tok_sentence)], output_type=yttm.OutputType.SUBWORD)[0]
-		results = self.translator.translate_batch([tok_sentence], replace_unknowns=False, return_scores=False) # repetition_penalty=2
-		# eprint(results[0].scores[0])
-		tok_translation = bpe_detokenize(results[0].hypotheses[0])
-		vocabs.update(get_words(tok_translation))
+
+		return tok_sentence, vocabs, fakeperiod, maps
+
+
+	def _postprocess_sentence(self, result, tgt, fakeperiod, maps):
+		tok_translation = bpe_detokenize(result.hypotheses[0])
+		vocabs = get_words(tok_translation)
 		translation = self.tokenizers[tgt].detokenize(tok_translation)
 		if self.ext: translation = remove_markers(translation, maps)
 		if fakeperiod: translation = translation[:-1]
 		return translation.translate(str.maketrans('', '', PH_MARK)), vocabs
+
+
+	def translate_sentences(self, sentences, src, tgt):
+		"""
+		Process and translate a list of sentences.
+
+		Args:
+			sentences ([str]): List of sentences.
+			src (str): Source language.
+			tgt (str): Target language.
+
+		Returns:
+			translations ([str]): List of translated sentences.
+			vocabs ({str}): Set of words used in the entences and the translations.
+		"""
+
+		preprocessed_sentence_information = [self._preprocess_sentence(sentence, src, tgt) for sentence in sentences]
+		tok_sentences, sentences_vocabs, fakeperiod_info, sentences_maps = zip(*preprocessed_sentence_information)
+
+		vocabs = set()
+		for sentence_vocabs in sentences_vocabs:
+			vocabs.update(sentence_vocabs)
+
+		results = self.translator.translate_batch(tok_sentences, replace_unknowns=False, return_scores=False)
+
+		postprocess_arguments = zip(results, fakeperiod_info, sentences_maps)
+		processed_translation_information = [self._postprocess_sentence(result, tgt, fakeperiod, maps)
+									   for (result, fakeperiod, maps) in postprocess_arguments]
+		
+		translations, translations_vocabs = zip(*processed_translation_information)
+		
+		for translation_vocabs in translations_vocabs:
+			vocabs.update(translation_vocabs)
+
+		return translations, vocabs
+
 
 models, gui_models = {}, {}
 for direction, locations in model_config.items():
@@ -222,13 +265,19 @@ def translate_text():
 
 	input = [list(model.s_split(src, line)) if len(line) else [] for line in prepareTranslationInputText(text).rstrip().split('\n')]
 
-	output, vocabs = [], set()
-	for line in input:
-		items = []
-		if line:
-			for sentence in line:
-				(lambda x, y: (items.append(x), vocabs.update(y))) (*model.s_translate(sentence, src, tgt))
-		output.append(items)
+	sentences_and_line_numbers = [(sentence, i) for (i, line) in enumerate(input) for sentence in line]
+	sentences, line_numbers = zip(*sentences_and_line_numbers)
+
+	translations, vocabs = model.translate_sentences(sentences, src, tgt)
+
+	lines_dict = defaultdict(list)
+	for translation, line in zip(translations, line_numbers):
+		lines_dict[line].append(translation)
+
+	# Convert dict to list of lists (sorted by line number if needed)
+	highest_line_num = max(lines_dict.keys())
+	output = [lines_dict[i] for i in range(highest_line_num+1)]
+
 
 	return {
 		"marked_input": input,
