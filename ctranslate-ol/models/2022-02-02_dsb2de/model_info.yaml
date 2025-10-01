@@ -11,6 +11,7 @@ sentence_splitter_nonbreaking_prefix_files:
   dsb: nonbreaking_prefixes/nonbreaking_prefix.dsb
 protected_pattern_file: nonbreaking_prefixes/protected_pattern
 escape_xml: false
+placeholder_handling_method: named_entitiy_id
 trainer: Dario Stojanovski
 traindate: '2022-02-02'
 ext: false

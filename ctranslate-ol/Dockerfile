@@ -23,4 +23,6 @@ COPY nonbreaking_prefixes/* /app/nonbreaking_prefixes/
 
 COPY CTranslator.py /app/
 
+COPY placeholder_handling /app/placeholder_handling
+
 CMD ["python", "CTranslator.py"]

@@ -5,10 +5,11 @@ from ruamel.yaml import YAML
 from collections import defaultdict
 from sentence_splitter import SentenceSplitter
 
+from placeholder_handling import set_markers, unset_markers
+import re
+
 os.environ["MKL_CBWR"] = "AUTO,STRICT" # Batchtranslations sollen nicht von der Übersetzung einzelner Sätze abweichen
 
-def eprint(*args, **kwargs):
-	print(*args, file=sys.stderr, **kwargs)
 
 def set_version(vstore):
 	import datetime
@@ -21,70 +22,6 @@ def set_version(vstore):
 		with open(vstore, 'w') as f: f.write(version)
 	return version
 
-from urlextract import URLExtract
-extractor = URLExtract()
-for l, r in ('„','“'), ('‚','‘'), ('(', ')'), (' ', '.'), (' ', '?'), (' ', '!'), (' ', ','), (' ', ')'):
-	extractor.add_enclosure(l, r)
-
-import re
-EMOJI_PATTERN = (
-	r"[\U0001F600-\U0001F64F]|" # emoticons
-	r"[\U0001F300-\U0001F5FF]|" # symbols & pictographs
-	r"[\U0001F680-\U0001F6FF]|" # transport & map symbols
-	r"[\U0001F1E0-\U0001F1FF]|" # flags (iOS)
-	r"[\U0001f926-\U0001f937]|"
-	r"[\U00010000-\U0010ffff]"
-)
-MAIL_PATTERN    = r"[A-zěłó0-9\.\-+_]+@[A-z0-9\.\-+_]+\.[A-z]+"
-HASHTAG_PATTERN = r"#[^ !@#$%^&*(),.?\":{}|<>“]+"
-QUOTE_PATTERN   = r"[„“‚‘»«›‹”’]"
-
-PH_MARK = '⟦⟧' # MATHEMATICAL SQUARE BRACKETS (U+27E6, Ps): ⟦; (U+27E7, Pe): ⟧
-
-# Funktion zum Setzen der NE-Marker
-# gibt mit Platzhaltern versehenen Satz und Rückübersetzungsinformation zurück
-def set_markers(sentence):
-	positions = dict()
-	for url in extractor.find_urls(sentence):
-		positions[sentence.find(url)] = url
-		sentence = sentence.replace(url, PH_MARK, 1)
-
-	for entity in re.findall(rf"{MAIL_PATTERN}|{HASHTAG_PATTERN}|{EMOJI_PATTERN}", sentence):
-		positions[sentence.find(entity)] = entity
-		sentence = sentence.replace(entity, PH_MARK, 1)
-
-	for lquote in re.findall(rf"({QUOTE_PATTERN})\b", sentence):
-		positions[sentence.find(lquote)] = lquote + '\b'
-		sentence = sentence.replace(lquote, PH_MARK, 1)
-
-	for rquote in re.findall(rf"\b({QUOTE_PATTERN})", sentence):
-		positions[sentence.find(rquote)] = '\b' + rquote
-		sentence = sentence.replace(rquote, PH_MARK, 1)
-
-	return sentence, [positions[pos] for pos in sorted(positions.keys())]
-
-def remove_markers(sentence, maps):
-	sentence = sentence.replace(' '.join(list(PH_MARK)), PH_MARK)
-	for map in maps:
-		if map[0] == '\b':
-			sentence = sentence.replace(' ' + PH_MARK, map[1], 1)
-		elif len(map) > 1 and map[1] == '\b':
-			sentence = sentence.replace(PH_MARK + ' ', map[0], 1)
-		else:
-			sentence = sentence.replace(PH_MARK, map, 1)
-	return sentence
-
-teststring = 'Abo sće hižo raz wo wužiwanju „dźěćacych pytanskich mašinow“ kaž blinde-kuh.de a fragFINN.de pod sylko.freudenberg@stadt.kamenz.de přemyslował/a?'
-try:
-	assert \
-		set_markers(teststring) \
-		== \
-		('Abo sće hižo raz wo wužiwanju ⟦⟧dźěćacych pytanskich mašinow⟦⟧ kaž ⟦⟧ a ⟦⟧ pod ⟦⟧ přemyslował/a?', ['„\b', '\b“', 'blinde-kuh.de', 'fragFINN.de', 'sylko.freudenberg@stadt.kamenz.de'])
-
-except AssertionError as e:
-	eprint('Platzhalter passen nicht!')
-	eprint(set_markers(teststring))
-	sys.exit(1)
 
 import ctranslate2, logging
 ctranslate2.set_log_level(logging.INFO)
@@ -143,7 +80,6 @@ class model:
 		self.sentence_splitters = dict()
 		for lang in set(sum([dir.split('_') for dir in self.directions], [])):
 			tokenizer_language = self.tokenizer_languages[lang]
-			#self.tokenizers[lang] = MosesTokenizer(lang, aggressive_dash_splits=model_info.get('aggressive_dash_splits'), url_handling=False, verbose=True) # user_dir='nonbreaking_prefixes'
 			if lang in self.custom_nonbreaking_prefix_files:
 				prefix_file = self.custom_nonbreaking_prefix_files[lang]
 				self.tokenizers[lang] = MosesTokenizer(tokenizer_language, custom_nonbreaking_prefixes_file=prefix_file)
@@ -158,6 +94,8 @@ class model:
 													 non_breaking_prefix_file=prefix_file)
 			else:
 				self.sentence_splitters[lang] = SentenceSplitter(language=lang)
+		
+		self.placeholder_method = model_info.get("placeholder_handling_method")
 
 	def s_split(self, lang, text):
 		text_replace_special_chars = text.translate(str.maketrans('„“»«‚‘', '""""""'))
@@ -172,10 +110,7 @@ class model:
 	def _preprocess_sentence(self, sentence, src, tgt):
 		fakeperiod = sentence and not (sentence[-1] in string.punctuation + '…')
 		if fakeperiod: sentence += '.'
-		if self.ext:
-			sentence, maps = set_markers(sentence)
-		else:
-			maps = None
+		sentence, markers_information = set_markers(sentence, self.placeholder_method)
 		tok_sentence = self.tokenizers[src].tokenize(sentence,
 											    aggressive_dash_splits=self.aggressive_dash_splits,
 												protected_patterns=self.protected_patterns,
@@ -186,16 +121,16 @@ class model:
 		vocabs = get_words(tok_sentence)
 		tok_sentence = [f"<{tgt}>"] + self.bpe.encode([' '.join(tok_sentence)], output_type=yttm.OutputType.SUBWORD)[0]
 
-		return tok_sentence, vocabs, fakeperiod, maps
+		return tok_sentence, vocabs, fakeperiod, markers_information
 
 
-	def _postprocess_sentence(self, result, tgt, fakeperiod, maps):
+	def _postprocess_sentence(self, result, tgt, fakeperiod, markers_information):
 		tok_translation = bpe_detokenize(result.hypotheses[0])
 		vocabs = get_words(tok_translation)
 		translation = self.detokenizers[tgt].detokenize(tok_translation)
-		if self.ext: translation = remove_markers(translation, maps)
+		translation = unset_markers(translation, self.placeholder_method, markers_information)
 		if fakeperiod: translation = translation[:-1]
-		return translation.translate(str.maketrans('', '', PH_MARK)), vocabs
+		return translation, vocabs
 
 
 	def translate_sentences(self, sentences, src, tgt):
@@ -213,7 +148,7 @@ class model:
 		"""
 
 		preprocessed_sentence_information = [self._preprocess_sentence(sentence, src, tgt) for sentence in sentences]
-		tok_sentences, sentences_vocabs, fakeperiod_info, sentences_maps = zip(*preprocessed_sentence_information)
+		tok_sentences, sentences_vocabs, fakeperiod_info, sentences_markers_information = zip(*preprocessed_sentence_information)
 
 		vocabs = set()
 		for sentence_vocabs in sentences_vocabs:
@@ -221,9 +156,9 @@ class model:
 
 		results = self.translator.translate_batch(tok_sentences, replace_unknowns=False, return_scores=False)
 
-		postprocess_arguments = zip(results, fakeperiod_info, sentences_maps)
-		processed_translation_information = [self._postprocess_sentence(result, tgt, fakeperiod, maps)
-									   for (result, fakeperiod, maps) in postprocess_arguments]
+		postprocess_arguments = zip(results, fakeperiod_info, sentences_markers_information)
+		processed_translation_information = [self._postprocess_sentence(result, tgt, fakeperiod, markers_information)
+									   for (result, fakeperiod, markers_information) in postprocess_arguments]
 		
 		translations, translations_vocabs = zip(*processed_translation_information)
 		
