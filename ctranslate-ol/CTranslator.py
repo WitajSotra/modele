@@ -117,7 +117,6 @@ class model:
 												escape=self.escape_xml,
 												return_str=False
 											   )
-		# tok_sentence = ' '.join(tok_sentence).replace(' '.join(list(PH_MARK)), PH_MARK).split()
 		vocabs = get_words(tok_sentence)
 		tok_sentence = [f"<{tgt}>"] + self.bpe.encode([' '.join(tok_sentence)], output_type=yttm.OutputType.SUBWORD)[0]
 
@@ -128,7 +127,9 @@ class model:
 		tok_translation = bpe_detokenize(result.hypotheses[0])
 		vocabs = get_words(tok_translation)
 		translation = self.detokenizers[tgt].detokenize(tok_translation)
+		print(translation)
 		translation = unset_markers(translation, self.placeholder_method, markers_information)
+		print(translation)
 		if fakeperiod: translation = translation[:-1]
 		return translation, vocabs
 

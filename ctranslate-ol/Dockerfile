@@ -13,6 +13,7 @@ RUN pip install ctranslate2
 RUN pip install youtokentome
 RUN pip install ruamel.yaml
 RUN pip install sentence_splitter
+RUN pip install validators
 
 
 COPY models /app/models
