@@ -12,9 +12,11 @@
 
 `curl http://localhost:25000/info`
 
+Returns information on available models and translation directions.
+
 `curl -X POST http://localhost:25000/translate -H "Content-Type: application/json" -d '{"text": "Dies ist ein Test. Test.\nTest2.\n\nTest3. Test4.\n" , "source_language":"de", "target_language":"hsb" }'`
 
-
+In the translate call you can set an optional "model" parameter that sets which model will be used for the translation.
 
 ## Modellkonfiguration
 Die Modelle müssen im Ordner `models` abgelegt werden. Die Datei `model_config.yaml` enthält die Information, welche Modelle für welche Sprachrichtungen genutzt werden können. Das erste Modell in der Liste ist das Default-Modell für die jeweilige Sprache, das genutzt wird, wenn im `/translate`-Call kein Modell angegeben wird. Dabei wird jedes Modell durch den Namen des Unterordners identifiziert, in dem das Modell abgelegt ist.
@@ -40,4 +42,5 @@ Felder in model_info.yaml:
 | escape_xml | true, false | Ob XML-Symbole im Tokenizer escaped werden sollen. Sollte der Einstellung entsprechen, die auch im Training benutzt wurde. |
 | placeholder_handling_method | named_entity_id, ph_mark, keine | Die Methode, die zur Ersetzung von Emailadressen, URLs, Zahlen etc. mit Platzhaltern verwendet wird. `named_entity_id` ersetzt die relevanten Zeichenketten mit einer Zahl. Das ist die Methode, die aus dem Frontend übernommen wurde. Sie ist vor allem für die LMU-Modelle relevant. `ph_mark` ersetzt die Zeichenketten mit dem String '⟦⟧'. Diese Methode kommt bei Modellen zum Einsatz, die damit trainiert wurde; insbesondere die von Olaf Langner trainieren Modelle. |
 | return_unks | true, false | Gib beim `translate`-Aufruf die unbekannten Tokens zurück. Funktioniert nur, wenn für ein Modell ein `train_vocabulary.txt` hinterlegt ist. |
+
 | aggressive_dash_splits | true, false | Setting für den Tokenizer. Sollten denselben Wert haben, der im Training verwendet wurde. |
