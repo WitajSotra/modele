@@ -15,7 +15,7 @@ escape_xml: false
 placeholder_handling_method: named_entitiy_id
 trainer: Dario Stojanovski
 traindate: '2022-02-02'
-ext: false
+return_unks: false
 aggressive_dash_splits: false
 BLEU_score: 
 TER_score: 

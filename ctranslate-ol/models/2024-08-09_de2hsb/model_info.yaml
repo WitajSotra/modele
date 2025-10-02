@@ -14,7 +14,7 @@ placeholder_handling_method: ph_mark
 escape_xml: false
 trainer: Jesus Calvillo
 traindate: '2024-08-09'
-ext: true
+return_unks: true
 aggressive_dash_splits: true
 BLEU_score: 63.5939
 TER_score: 23.536

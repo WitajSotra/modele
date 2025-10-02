@@ -56,11 +56,11 @@ class model:
 		self.directions = model_info.get('directions')
 		self.trainer = model_info.get('trainer')
 		self.traindate = model_info.get('traindate')
-		self.ext = model_info.get('ext')
+		self.return_unks = model_info.get('return_unks')
 		self.BLEU_score = model_info.get('BLEU_score')
 		self.TER_score = model_info.get('TER_score')
 
-		if self.ext: self.vocabs = set(open(path + '/train_vocabulary.txt').read().split('\n'))
+		if self.return_unks: self.vocabs = set(open(path + '/train_vocabulary.txt').read().split('\n'))
 
 		self.aggressive_dash_splits = model_info.get('aggressive_dash_splits')
 		self.escape_xml = model_info.get('escape_xml')
@@ -127,9 +127,7 @@ class model:
 		tok_translation = bpe_detokenize(result.hypotheses[0])
 		vocabs = get_words(tok_translation)
 		translation = self.detokenizers[tgt].detokenize(tok_translation)
-		print(translation)
 		translation = unset_markers(translation, self.placeholder_method, markers_information)
-		print(translation)
 		if fakeperiod: translation = translation[:-1]
 		return translation, vocabs
 
@@ -262,7 +260,7 @@ def translate_text():
 		"marked_input": input,
 		"marked_translation": output,
 		"model": model.name,
-		"unks": list(vocabs-model.vocabs) if model.ext else []
+		"unks": list(vocabs-model.vocabs) if model.return_unks else []
 	}
 
 @app.route('/info', methods=['GET'])

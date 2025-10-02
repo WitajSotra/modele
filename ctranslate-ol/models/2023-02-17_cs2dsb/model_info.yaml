@@ -13,7 +13,7 @@ escape_xml: false
 placeholder_handling_method: named_entitiy_id
 trainer: Marko Meškank
 traindate: '2023-02-17'
-ext: false
+return_unks: false
 aggressive_dash_splits: false
 BLEU_score: 
 TER_score: 

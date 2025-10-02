@@ -14,7 +14,7 @@ placeholder_handling_method: ph_mark
 escape_xml: false
 trainer: Olaf Langner
 traindate: '2024-02-27'
-ext: true
+return_unks: true
 aggressive_dash_splits: true
 BLEU_score: 65.0457
 TER_score: 22.5934
