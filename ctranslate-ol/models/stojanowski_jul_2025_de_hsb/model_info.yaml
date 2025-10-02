@@ -10,7 +10,7 @@ escape_xml: true
 placeholder_handling_method: named_entitiy_id
 trainer: Johann Seltmann
 traindate: '2025-07-17'
-ext: false
+return_unks: true
 aggressive_dash_splits: false
 BLEU_score: 64.5 (altes Testset)
 TER_score: 22.6 (altes Testset)
