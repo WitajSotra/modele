@@ -18,8 +18,6 @@ RUN pip install validators
 
 COPY models /app/models
 
-#COPY nonbreaking_prefixes/nonbreaking_prefix.* /usr/local/lib/python3.9/site-packages/mosestokenizer/share/nonbreaking_prefixes/
-#COPY nonbreaking_prefixes/protected_pattern /usr/local/lib/python3.9/site-packages/mosestokenizer/share
 COPY nonbreaking_prefixes/* /app/nonbreaking_prefixes/
 
 COPY CTranslator.py /app/
