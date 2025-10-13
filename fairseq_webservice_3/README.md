@@ -40,4 +40,5 @@ Felder in model_info.yaml:
 | escape_xml | true, false | Ob XML-Symbole im Tokenizer escaped werden sollen. Sollte der Einstellung entsprechen, die auch im Training benutzt wurde. |
 | placeholder_handling_method | named_entity_id, ph_mark, keine | Die Methode, die zur Ersetzung von Emailadressen, URLs, Zahlen etc. mit Platzhaltern verwendet wird. `named_entity_id` ersetzt die relevanten Zeichenketten mit einer Zahl. Das ist die Methode, die aus dem Frontend übernommen wurde. Sie ist vor allem für die LMU-Modelle relevant. `ph_mark` ersetzt die Zeichenketten mit dem String '⟦⟧'. Diese Methode kommt bei Modellen zum Einsatz, die damit trainiert wurde; insbesondere die von Olaf Langner trainieren Modelle. |
 | return_unks | true, false | Gib beim `translate`-Aufruf die unbekannten Tokens zurück. Funktioniert nur, wenn für ein Modell ein `train_vocabulary.txt` hinterlegt ist. |
+
 | aggressive_dash_splits | true, false | Setting für den Tokenizer. Sollten denselben Wert haben, der im Training verwendet wurde. |
