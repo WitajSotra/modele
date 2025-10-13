@@ -1,0 +1,28 @@
+hsb_de:
+- 2024-07-31_hsb2de
+- 2024-02-27_hsb2de
+- 2024-04-09_hsb2de_de2hsb
+- 2022-02-02_hsb2de
+hsb_dsb:
+- 2022-01-26_hsb2dsb
+hsb_cs:
+- 2023-02-17_hsb2cs
+de_hsb:
+- 2024-08-09_de2hsb
+- 2024-02-28_de2hsb
+- 2024-04-09_hsb2de_de2hsb
+- 2022-02-02_de2hsb
+- stojanowski_jul_2025_de_hsb
+de_dsb:
+- 2022-02-02_de2dsb
+- stojanowski_jul_2025_de_dsb
+dsb_hsb:
+- 2022-02-02_dsb2hsb
+dsb_de:
+- 2022-02-02_dsb2de
+dsb_cs:
+- 2023-02-17_dsb2cs
+cs_hsb:
+- 2023-02-17_cs2hsb
+cs_dsb:
+- 2023-02-17_cs2dsb

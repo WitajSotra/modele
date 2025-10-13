@@ -1,0 +1,2 @@
+{"name":"BLEU","score":63.5939,"signature":"nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.4.2","verbose_score":"83.8/68.2/57.8/49.5 (BP = 1.000 ratio = 1.005 hyp_len = 25937 ref_len = 25798)","nrefs":"1","case":"mixed","eff":"no","tok":"13a","smooth":"exp","version":"2.4.2"}
+{"name":"TER","score":23.536,"signature":"nrefs:1|case:lc|tok:tercom|norm:no|punct:yes|asian:no|version:2.4.2","nrefs":"1","case":"lc","tok":"tercom","norm":"no","punct":"yes","asian":"no","version":"2.4.2"}

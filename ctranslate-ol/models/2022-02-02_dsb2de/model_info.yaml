@@ -1,0 +1,9 @@
+name: lmu_ds_dsb_de_2022-02-02
+directions:
+- dsb_de
+trainer: Dario Stojanovski
+traindate: '2022-02-02'
+ext: false
+aggressive_dash_splits: false
+BLEU_score: 
+TER_score: 

@@ -1,0 +1,9 @@
+name: witaj_jc_de_hsb_2024-08-09
+directions:
+- de_hsb
+trainer: Jesus Calvillo
+traindate: '2024-08-09'
+ext: true
+aggressive_dash_splits: true
+BLEU_score: 63.5939
+TER_score: 23.536

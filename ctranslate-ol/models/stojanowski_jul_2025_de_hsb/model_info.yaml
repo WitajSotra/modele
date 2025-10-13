@@ -1,0 +1,9 @@
+name: stojanowski_jul_2025_de_hsb
+directions:
+- de_hsb
+trainer: Johann Seltmann
+traindate: '2025-07-17'
+ext: true
+aggressive_dash_splits: true
+BLEU_score: 64.5 (altes Testset)
+TER_score: 22.6 (altes Testset)
