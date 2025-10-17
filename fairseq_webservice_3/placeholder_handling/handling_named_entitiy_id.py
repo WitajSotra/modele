@@ -1,6 +1,6 @@
 import re
 import unicodedata
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional, Any
 import validators
 
 
@@ -21,9 +21,13 @@ regex_spaces = r"\s\u00A0"   # whitespace plus NBSP
 regex_brackets = r"(){}\[\]"
 regex_satzzeichen = r"[.;,?!:-]"
 
+#regex_interpunktion_nicht_satzzeichen = (
+#    r"\-/()<>=´`'\"\+\*\~:_\^"
+#    + r"«»‘’‚‛“”„‟‹›"
+#)
+
 regex_interpunktion_nicht_satzzeichen = (
-    r"\-/()<>=´`'\"\+\*\~:_\^"
-    + r"«»‘’‚‛“”„‟‹›"
+    r"[\-/()<>=´`\+\*\~:_\^«»‘’‚‛“”„‟‹›']" #
 )
 
 regex_latin_plus_interpunktion = (
@@ -69,7 +73,7 @@ ESC_R = "╣"  # pseudo-escaped right marker
 
 
 
-def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
+def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tuple[str, Dict[str, Dict[str, Any]]]:
     """
     Ersetzt URLs, Domains, E-Mails, Zahlenfolgen und nicht-lateinische Sequenzen
     durch interne NE-Marker der Form ├<type>:<id>┤.
@@ -84,24 +88,40 @@ def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
     used_ids = set()  # ids chosen so far (strings)
     # Sammle alle reinen Ziffernfolgen aus dem pseudo-escaped Text -> diese IDs vermeiden
     banned_digit_sequences = set(re.findall(r"\d+", text_ps))
+
     # generator für next available id (als string), überspringt banned und used
+    # Die generierten Zahlen sind prefixfrei.
     def next_id():
-        i = 1
+        i = 10
         while True:
             s = str(i)
-            if s not in banned_digit_sequences and s not in used_ids:
-                used_ids.add(s)
-                return s
-            i += 1
+            if s in banned_digit_sequences or s in used_ids:
+                i += 1
+                continue
+
+            # skip if s is a prefix of an existing ID
+            if any(u.startswith(s) for u in used_ids):
+                i += 1
+                continue
+
+            # skip if any existing ID is a prefix of s
+            if any(s.startswith(u) for u in used_ids):
+                i += 1
+                continue
+
+            used_ids.add(s)
+            return s
 
     # End-Satzzeichen, die am Tokenende entfernt/gesondert betrachtet werden sollen
     end_punct = set(".!?,;:—-()\"'")  # erweiterbar
 
     def is_non_latin_char(ch: str) -> bool:
-        if ord(ch) <= 256:
-            return False
         # treat punctuation etc. as latin
         if re.match(regex_satzzeichen, ch):
+            return False
+        if re.match(regex_interpunktion_nicht_satzzeichen, ch):
+            return False
+        if re.match(r"[0-9]", ch):
             return False
         try:
             nm = unicodedata.name(ch)
@@ -143,28 +163,45 @@ def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
 
     intermediate = []
 
-    for p in parts:
+    for j, p in enumerate(parts):
         if p.isspace() or p == "":
             intermediate.append({'text': p, 'ne': False})
             continue
         # p is a non-whitespace block; we will split it into latin/nonlatin runs
         runs = split_latin_nonlatin_runs(p)
         # Each run: (substring, is_nonlatin)
-        for substring, is_nonlatin in runs:
+        for i, (substring, is_nonlatin) in enumerate(runs):
             if is_nonlatin:
-                intermediate.append({'text': substring, 'ne': True, 'type': 'nonlatin'})
+                segment_info = {'text': substring, 'ne': True, 'type': 'nonlatin'}
+                if len(intermediate) > 0 and re.search(r"\s$", intermediate[-1]["text"]):
+                    segment_info["space_before"] = True
+                else:
+                    segment_info["space_before"] = False
+
+                if i == len(runs) - 1:
+                    if j >= len(parts) - 1:
+                        segment_info["space_after"] = False
+                    else:
+                        if re.match(r"\s", parts[j+1]):
+                            segment_info["space_after"] = True
+                        else:
+                            segment_info["space_after"] = False
+                else:
+                    if re.match(r"\s", runs[i+1][0]):
+                        segment_info["space_after"] = True
+                    else:
+                        segment_info["space_after"] = False
+                intermediate.append(segment_info)
             else:
                 # latin/neutral run -> leave for further token-level checks (url/domain/email/number)
                 intermediate.append({'text': substring, 'ne': False})
 
 
-
-    #print("b: ", result_parts)
     # ---------- Schritt 3: Für alle nicht-NE Fragmente -> Token-Splitting per Leerzeichen (schon segmentiert),
     # aber einzelne parts enthalten bereits keine Whitespace; wir verarbeiten diese non-NE-Parts tokenweise ----------
     final_parts = []
     #for item in result_parts:
-    for item in intermediate:
+    for i, item in enumerate(intermediate):
         if item['ne'] or item['text'].isspace():
             final_parts.append(item)
             continue
@@ -179,34 +216,49 @@ def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
         token_body = frag
         checked_as_ne = False
 
+        segment_info = {
+            "text": token_body + trailing,
+        }
+
+        if i > 0:
+            segment_info["space_before"] = intermediate[i-1]["text"].isspace()
+        else:
+            segment_info["space_before"] = False
+        
+        if i < len(intermediate) - 1:
+            segment_info["space_after"] = intermediate[i+1]["text"].isspace()
+        else:
+            segment_info["space_after"] = False
+
         # Prüfe Token auf URL / Email / Domain
         if token_body:
             if validators.email(token_body):
                 # markiere als E-Mail (inkl. trailing Satzzeichen, wie in Schritt 3)
-                final_parts.append({'text': token_body + trailing, 'ne': True, 'type': 'email'})
+                segment_info["ne"] = True
+                segment_info["type"] = "email"
                 checked_as_ne = True
             elif validators.url(token_body):
-                final_parts.append({'text': token_body + trailing, 'ne': True, 'type': 'url'})
+                segment_info["ne"] = True
+                segment_info["type"] = "url"
                 checked_as_ne = True
             elif validators.domain(token_body):
-                final_parts.append({'text': token_body + trailing, 'ne': True, 'type': 'domain'})
+                segment_info["ne"] = True
+                segment_info["type"] = "domain"
                 checked_as_ne = True
 
         if not checked_as_ne:
             # Wenn nicht als NE erkannt, füge ursprünglichen Token (inkl. trailing) als nicht-NE ein --
             # Schritt 4 wird danach auf alle noch-nicht-NE Fragmente angewendet.
-            final_parts.append({'text': (token_body + trailing), 'ne': False})
+            segment_info["ne"] = False
 
-    #print("c: ", final_parts)
+        final_parts.append(segment_info)
+
     # ---------- Schritt 4: In noch-nicht-NE Fragmenten -> markiere Ziffernfolgen + optionales Interpunktionszeichen (eines aus: “.;-:,”) als NE ----------
-    
-    
-    
     interpunkt = r"[.;\-:,]"
     digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?)")
 
     processed_parts = []
-    for item in final_parts:
+    for i, item in enumerate(final_parts):
         if item['ne'] or item['text'].isspace():
             processed_parts.append(item)
             continue
@@ -219,7 +271,27 @@ def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
             start, end = m.span(1)
             if start > last_idx:
                 out_fragments.append({'text': s[last_idx:start], 'ne': False})
-            out_fragments.append({'text': m.group(1), 'ne': True, 'type': 'number'})
+            found_number_str = m.group(1)
+            if re.match(r"\d+", found_number_str) and len(found_number_str) == 1:
+                # if the number is an integer < 10, don't replace it, to avoid weird problems with dual forms
+                fragment_info = {'text': m.group(1), 'ne': False}
+            else:
+                fragment_info = {'text': m.group(1), 'ne': True, 'type': 'number'}
+            if start == 0:
+                if i > 0:
+                    fragment_info["space_before"] = final_parts[i-1]["text"].isspace()
+                else:
+                    fragment_info["space_before"] = False
+            else:
+                fragment_info["space_before"] = False
+            if end == len(s):
+                if i < len(intermediate) - 1:
+                    fragment_info["space_after"] = final_parts[i+1]["text"].isspace()
+                else:
+                    fragment_info["space_after"] = False
+            else:
+                fragment_info["space_after"] = False
+            out_fragments.append(fragment_info)
             last_idx = end
         if last_idx < len(s):
             out_fragments.append({'text': s[last_idx:], 'ne': False})
@@ -229,7 +301,6 @@ def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
         else:
             processed_parts.extend(out_fragments)
 
-    #print("d: ", processed_parts)
     # ---------- Schritt 5: Für alle als NE markierten Fragmente -> ersetze durch Marker ├<type>:<id>┤ ----------
     # Erstelle output-String schrittweise und fülle mapping
     out = []
@@ -238,31 +309,38 @@ def set_markers(text: str) -> Tuple[str, Dict[str, str]]:
             orig = item['text']
             # hole id, die nicht bereits im Text vorkommt (banned_digit_sequences berücksichtigt)
             nid = next_id()
-            mapping[nid] = orig
+            mapping[nid] = {
+                "text": orig,
+                "space_before": item.get("space_before", False),
+                "space_after": item.get("space_after", False),
+            }
             out.append(f"├{nid}┤")
         else:
             out.append(item['text'])
 
-
     out_text = "".join(out)
 
     # ---------- Schritt 6: Ersetze "┤├" durch "┤ ├" (also direkt aufeinanderfolgende NE-Tokens ggf. trennen) ----------
-    out_text = out_text.replace("┤├", "┤┿├")
-    out_text = out_text.replace("┤", "")
-    out_text = out_text.replace("├", "")
+    if ne_placeholder_separator:
+        #out_text = out_text.replace("┤├", "┤┿├")
+        out_text = out_text.replace("┤├", f"┤{ne_placeholder_separator}├")
+    else:
+        out_text = out_text.replace("┤├", f"┤ ├")
+    out_text = out_text.replace("┤", " ")
+    out_text = out_text.replace("├", " ")
 
     # Rückgabe: text mit Markern und mapping
     return out_text, mapping
 
 
 def remove_markers(text_with_markers: str,
-                      mapping: Dict[str, str]) -> str:
+                      mapping: Dict, ne_placeholder_separator: Optional[str]=None) -> str:
     """
-    Ersetzt NE-Marker der Form ├<type>:<id>┤ im gegebenen Text durch die Originalsequenzen
+    Ersetzt NE-Marker der Form <id> im gegebenen Text durch die Originalsequenzen
     aus `mapping`.
 
     Args:
-        text_with_markers: Text, der Marker wie ├url:3┤ enthält.
+        text_with_markers: Text, der Marker wie 3 enthält.
         mapping: Dict, das pro id die Originalsequenz liefert: mapping["3"] = "https://...",
 
     Returns:
@@ -270,61 +348,75 @@ def remove_markers(text_with_markers: str,
                        und Pseudo-Escapes zurückgetauscht sind.
     """
 
-    # Pattern: ├<id>┤   -> wir extrahieren die id (alles bis zum nächsten ┤)
 
-
-    #marker_re = re.compile(r"├([^┤]+)┤")
-
-    #found_ids = set()
-
-    #def repl(m: re.Match) -> str:
-    #    id_ = m.group(0)
-    #    if id_ not in mapping:
-    #            print(f"ID '{id_}' not found in mapping.")
-    #            return m.group(0)
-    #    found_ids.add(id_)
-    #    val = mapping[id_]
-    #    orig = str(val)
-    #    return orig
-
-    ## 1) Ersetze alle Marker durch die zugehörigen Originalsequenzen
-    #for id_ in mapping:
-    #    marker_re = re.compile(id_)
-    #    text_with_markers = marker_re.sub(repl, text_with_markers)
-
-    ## 2) Falls bei der Ersetzung Pseudo-Escaped Marker zurückgegeben werden sollen, konvertiere sie:
-    #restored = text_with_markers.replace(ESC_L, "├").replace(ESC_R, "┤")
-    #restored = restored.replace("┿", "")
-
-    #if token_only:
-        # match digit sequence that is a whole token (surrounded by whitespace or string boundaries)
-    #    pattern = re.compile(r"(?<!\S)(\d+)(?!\S)")
-    #else:
-    pattern = re.compile(r"(\d+)")
-
-    def _get_original_for_id(id_str: str) -> str:
+    def _get_original_for_id(id_str: str, interpunction_after: str) -> str:
         if id_str not in mapping:
-            #if strict:
             print(f"ID '{id_str}' not found in mapping.")
-                #raise KeyError(f"ID '{id_str}' not found in mapping.")
             return None  # caller will decide to leave unchanged
         val = mapping[id_str]
         if isinstance(val, dict):
-            return val.get("text", "")
+            text = val.get("text", "")
+            if val.get("space_before", False):
+                text = " " + text
+            if not interpunction_after:
+                if val.get("space_after", False):
+                    text = text + " "
+            else:
+                text = text + interpunction_after
+            return text
+            
         return str(val)
 
     def repl(m: re.Match) -> str:
-        id_str = m.group(1)
-        orig = _get_original_for_id(id_str)
+        id_str = m.group(2)
+        interpunction_after = m.group(4)
+        orig = _get_original_for_id(id_str, interpunction_after)
         if orig is None:
             # strict was False and id not found -> leave the digit sequence unchanged
             return id_str
         return orig
 
-    restored = pattern.sub(repl, text_with_markers)
+    restored = ""
+    intermediate = ""
+    skip_next_space = False
+
+    for ch in text_with_markers:
+
+        if skip_next_space:
+            skip_next_space = False
+            if ch.isspace():
+                continue
+
+        if intermediate == "" and restored != "":
+            if restored[-1].isspace() and ch.isspace():
+                # skip duplicate spaces that can be added from space_after setting
+                continue
+            if restored[-1].isspace() and re.match(r"[\".,]", ch):
+                # if the marker handling inserted a space, but the next character is a 
+                # full stop, comma, or quotation, remove the space
+                restored = restored[:-1]
+
+        intermediate += ch
+
+        for _id in mapping:
+            pattern = re.compile(rf"(\s?)({_id})(\s?)([\".,])?")
+            if re.search(pattern, intermediate):
+                intermediate_restored = pattern.sub(repl, intermediate)
+                if restored != "" and restored[-1].isspace() \
+                    and intermediate_restored != "" and intermediate_restored[0].isspace():
+                    intermediate_restored = intermediate_restored[1:]
+                restored += intermediate_restored
+                intermediate = ""
+                if not mapping[_id].get("space_after", True):
+                    skip_next_space = True
+                break
+
+    restored += intermediate
+        
 
     restored = restored.replace(ESC_L, "├").replace(ESC_R, "┤")
-    restored = restored.replace("┿", "")
+    if ne_placeholder_separator:
+        restored = restored.replace(ne_placeholder_separator, "")
     #if restore_pseudo_escapes:
     #    restored = restored.replace(esc_left, "├").replace(esc_right, "┤")
 
@@ -332,6 +424,7 @@ def remove_markers(text_with_markers: str,
 
 
     return restored
+
 
 if __name__ == "__main__":
     test_strings = [

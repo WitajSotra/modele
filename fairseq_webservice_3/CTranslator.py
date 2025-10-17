@@ -44,6 +44,9 @@ model_config = YAML().load(open(f'{modelpath}/{model_config_file}'))
 valid_directions = set(model_config.keys())
 valid_sources, valid_targets = map(set, zip(*(dir.split('_') for dir in valid_directions)))
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class model:
 	def __init__(self, location, default=False):
 		path = modelpath + '/' + location
@@ -71,6 +74,8 @@ class model:
 				self.protected_patterns = [line.strip() for line in protected_pattern_file.readlines()]
 		else:
 			self.protected_patterns = None
+		self.ne_placeholder_separator = model_info.get("ne_placeholder_separator", "┿")
+
 
 		self.custom_nonbreaking_prefix_files = model_info.get("custom_nonbreaking_prefix_files", dict())
 		self.sentence_splitter_nonbreaking_prefix_files = model_info.get('sentence_splitter_nonbreaking_prefix_files', dict())
@@ -108,27 +113,36 @@ class model:
 				i += 1
 
 	def _preprocess_sentence(self, sentence, src, tgt):
+		logger.info(f"Input sentence: {sentence}")
 		fakeperiod = sentence and not (sentence[-1] in string.punctuation + '…')
 		if fakeperiod: sentence += '.'
-		sentence, markers_information = set_markers(sentence, self.placeholder_method)
+		sentence, markers_information = set_markers(sentence, self.placeholder_method, self.ne_placeholder_separator)
+		logger.info(f"marked sentence: {sentence}")
+		logger.info(f"marker info: {markers_information}")
 		tok_sentence = self.tokenizers[src].tokenize(sentence,
 											    aggressive_dash_splits=self.aggressive_dash_splits,
 												protected_patterns=self.protected_patterns,
 												escape=self.escape_xml,
 												return_str=False
 											   )
+		logger.info(f"tokenized sentence: {tok_sentence}")
 		vocabs = get_words(tok_sentence)
 		tok_sentence = [f"<{tgt}>"] + self.bpe.encode([' '.join(tok_sentence)], output_type=yttm.OutputType.SUBWORD)[0]
-
+		logger.info(f"Preprocessed sentence: {tok_sentence}")
 		return tok_sentence, vocabs, fakeperiod, markers_information
 
 
 	def _postprocess_sentence(self, result, tgt, fakeperiod, markers_information):
+		logger.info(f"model result: {result}")
 		tok_translation = bpe_detokenize(result.hypotheses[0])
+		logger.info(f"BPE-Detokenized sentence: {tok_translation}")
 		vocabs = get_words(tok_translation)
+		logger.info(f"BPE-Detokenized sentence: {tok_translation}")
 		translation = self.detokenizers[tgt].detokenize(tok_translation)
-		translation = unset_markers(translation, self.placeholder_method, markers_information)
+		logger.info(f"Detokenized sentence: {translation}")
+		translation = unset_markers(translation, self.placeholder_method, markers_information, self.ne_placeholder_separator)
 		if fakeperiod: translation = translation[:-1]
+		logger.info(f"Postprocessed sentence: {translation}")
 		return translation, vocabs
 
 
@@ -171,8 +185,6 @@ models, gui_models = {}, {}
 for direction, locations in model_config.items():
 	for i, location in enumerate(locations):
 		print(location)
-		#if location not in ["2024-08-09_de2hsb", "stojanowski_jul_2025_de_hsb"]:
-		#	continue
 		m = model(location, default = i==0)
 		models[m.name] = m
 		if i==0: gui_models[direction] = m.name
