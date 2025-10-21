@@ -4,9 +4,10 @@ import os, sys, string
 from ruamel.yaml import YAML
 from collections import defaultdict
 from sentence_splitter import SentenceSplitter
+import re
+import unicodedata
 
 from placeholder_handling import set_markers, unset_markers
-import re
 
 os.environ["MKL_CBWR"] = "AUTO,STRICT" # Batchtranslations sollen nicht von der Übersetzung einzelner Sätze abweichen
 
@@ -114,7 +115,8 @@ class model:
 
 	def _preprocess_sentence(self, sentence, src, tgt):
 		logger.info(f"Input sentence: {sentence}")
-		fakeperiod = sentence and not (sentence[-1] in string.punctuation + '…')
+		#fakeperiod = sentence and not (sentence[-1] in string.punctuation + '…')
+		fakeperiod = sentence and not unicodedata.category(sentence[-1]).startswith("P")
 		if fakeperiod: sentence += '.'
 		sentence, markers_information = set_markers(sentence, self.placeholder_method, self.ne_placeholder_separator)
 		logger.info(f"marked sentence: {sentence}")
