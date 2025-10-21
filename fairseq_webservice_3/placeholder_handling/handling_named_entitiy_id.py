@@ -112,9 +112,6 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
             used_ids.add(s)
             return s
 
-    # End-Satzzeichen, die am Tokenende entfernt/gesondert betrachtet werden sollen
-    end_punct = set(".!?,;:—-()\"'")  # erweiterbar
-
     def is_non_latin_char(ch: str) -> bool:
         # treat punctuation etc. as latin
         if re.match(regex_satzzeichen, ch):
@@ -160,7 +157,6 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
     # Wir bauen eine Liste result_parts, in der für jedes parts[i] entweder:
     # - a) {'text': original, 'ne': False}
     # - b) {'text': original, 'ne': True, 'type': <type>}
-
     intermediate = []
 
     for j, p in enumerate(parts):
@@ -196,7 +192,6 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
                 # latin/neutral run -> leave for further token-level checks (url/domain/email/number)
                 intermediate.append({'text': substring, 'ne': False})
 
-
     # ---------- Schritt 3: Für alle nicht-NE Fragmente -> Token-Splitting per Leerzeichen (schon segmentiert),
     # aber einzelne parts enthalten bereits keine Whitespace; wir verarbeiten diese non-NE-Parts tokenweise ----------
     final_parts = []
@@ -209,7 +204,8 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
         # Entferne ggf. Satzzeichen am Ende des Tokens (schritt 3b)
         # Wir entfernen *fortlaufend* am Ende, aber sammeln sie, damit sie zum NE-Text gehören (ggf.)
         trailing = ''
-        while frag and frag[-1] in end_punct:
+        while frag and unicodedata.category(frag[-1]).startswith("P"):
+            # use unicode categories to identify punctuation characters
             trailing = frag[-1] + trailing
             frag = frag[:-1]
 
@@ -255,7 +251,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
 
     # ---------- Schritt 4: In noch-nicht-NE Fragmenten -> markiere Ziffernfolgen + optionales Interpunktionszeichen (eines aus: “.;-:,”) als NE ----------
     interpunkt = r"[.;\-:,]"
-    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?)")
+    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?)(?!-?er|-?tych)", re.IGNORECASE)
 
     processed_parts = []
     for i, item in enumerate(final_parts):
