@@ -1,4 +1,4 @@
-name: stojanowski_jul_2025_de_dsb
+name: t2k_js_de_dsb_2025-08-01_lmu
 directions:
 - de_dsb
 tokenizer_languages:
@@ -8,6 +8,7 @@ sentence_splitter_nonbreaking_prefix_files:
   dsb: nonbreaking_prefixes/nonbreaking_prefix.dsb
 escape_xml: true
 placeholder_handling_method: named_entitiy_id
+ne_placeholder_separator:
 trainer: Johann Seltmann
 traindate: '2025-08-01'
 return_unks: false
