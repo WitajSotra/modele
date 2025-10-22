@@ -27,7 +27,8 @@ regex_satzzeichen = r"[.;,?!:-]"
 #)
 
 regex_interpunktion_nicht_satzzeichen = (
-    r"[\-/()<>=´`\+\*\~:_\^«»‘’‚‛“”„‟‹›'@]" #
+    #r"[\-/()<>=´`\+\*\~:_\^«»‘’‚‛“”„‟‹›'@]" #
+    r"[\-/()<>=\+\*\~:_\^‚‛'@]" #
 )
 
 regex_latin_plus_interpunktion = (
