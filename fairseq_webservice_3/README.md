@@ -6,7 +6,7 @@
 `
 ## Starten des Containers
 
-`docker run -d -p 35000:5000 --mount type=bind,source=$(pwd)/version.txt,target=/app/version.txt -it fairseq_webservice_3`
+`docker run -d -p 35000:5000 --mount type=bind,source=$(pwd)/version.txt,target=/app/version.txt --restart always -it fairseq_webservice_3`
 
 ## Test
 

@@ -6,7 +6,7 @@
 `
 ## Starten des Containers
 
-`docker run -d -p 25000:5000 --mount type=bind,source=$(pwd)/version.txt,target=/app/version.txt -it ctranslator`
+`docker run -d -p 25000:5000 --mount type=bind,source=$(pwd)/version.txt,target=/app/version.txt --restart always -it ctranslator`
 
 ## Test
 
