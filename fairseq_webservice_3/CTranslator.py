@@ -102,6 +102,7 @@ class model:
 				self.sentence_splitters[lang] = SentenceSplitter(language=lang)
 		
 		self.placeholder_method = model_info.get("placeholder_handling_method")
+		self.replace_unknowns = model_info.get("replace_unknowns", False)
 
 	def s_split(self, lang, text):
 		text_replace_special_chars = text.translate(str.maketrans('„“»«‚‘', '""""""'))
@@ -168,9 +169,7 @@ class model:
 		vocabs = set()
 		for sentence_vocabs in sentences_vocabs:
 			vocabs.update(sentence_vocabs)
-
-		results = self.translator.translate_batch(tok_sentences, replace_unknowns=False, return_scores=False)
-
+		results = self.translator.translate_batch(tok_sentences, replace_unknowns=self.replace_unknowns, return_scores=False)
 		postprocess_arguments = zip(results, fakeperiod_info, sentences_markers_information)
 		processed_translation_information = [self._postprocess_sentence(result, tgt, fakeperiod, markers_information)
 									   for (result, fakeperiod, markers_information) in postprocess_arguments]

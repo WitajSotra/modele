@@ -15,3 +15,4 @@ return_unks: false
 aggressive_dash_splits: false
 BLEU_score: 43.745
 TER_score: 41.1956
+replace_unknowns: true

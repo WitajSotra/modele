@@ -42,3 +42,4 @@ Felder in model_info.yaml:
 | ne_placeholder_separator | | Für das Placeholder Handling mit named_entity_id kann hier eine Zeichenkette definiert werden, um zwei direkt aufeinanderfolgende Platzhalter zu separieren. Default ist ┿ |
 | return_unks | true, false | Gib beim `translate`-Aufruf die unbekannten Tokens zurück. Funktioniert nur, wenn für ein Modell ein `train_vocabulary.txt` hinterlegt ist. |
 | aggressive_dash_splits | true, false | Setting für den Tokenizer. Sollten denselben Wert haben, der im Training verwendet wurde. |
+| replace_unknowns | true, false | Setting für die translate_batch-Funktion von CTranslate2. Wenn es True ist, werden unks im Output mit dem Input-Token mit der höchsten Attention ersetzt. Sollte false sein für Modelle aus cf2 und true für Modelle aus cf1. Default: false |

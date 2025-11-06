@@ -13,5 +13,6 @@ trainer: Johann Seltmann
 traindate: '2025-07-17'
 return_unks: true
 aggressive_dash_splits: false
+replace_unknowns: true
 BLEU_score: 64.5 (altes Testset)
 TER_score: 22.6 (altes Testset)
