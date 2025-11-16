@@ -9,7 +9,7 @@ import os
 import re
 
 
-version = "1.2.4 2024-12-20"
+version = "1.2.5 2025-08-23"
 
 os.environ["MKL_CBWR"] = "AUTO,STRICT"
 #os.environ["MKL_CBWR"] = "COMPATIBLE"
@@ -76,9 +76,9 @@ class FairseqCTranslateRunner:
         self.dir_non_breaking_prefixes = "sentence_splitter/non_breaking_prefixes/"
         # wenn ein non_breaking_prefix_file angegeben ist, hat der language-Parameter keine weitere Bedeutung (darf aber trotzdem nur 2 Buchstaben haben ...)
         self.sentence_splitter = {
-            "hsb": SentenceSplitter(language='xx', non_breaking_prefix_file=self.dir_non_breaking_prefixes+'hsb.txt'),
-            "de": SentenceSplitter(language='de'),
-            "dsb": SentenceSplitter(language='xx', non_breaking_prefix_file=self.dir_non_breaking_prefixes+'dsb.txt'),
+            "hsb": SentenceSplitter(language='xx', non_breaking_prefix_file=self.dir_non_breaking_prefixes+'nonbreaking_prefix.hsb'),
+            "de": SentenceSplitter(language='xx', non_breaking_prefix_file=self.dir_non_breaking_prefixes+'nonbreaking_prefix.de'),
+            "dsb": SentenceSplitter(language='xx', non_breaking_prefix_file=self.dir_non_breaking_prefixes+'nonbreaking_prefix.dsb'),
             "cs": SentenceSplitter(language='cs')
         }
 
