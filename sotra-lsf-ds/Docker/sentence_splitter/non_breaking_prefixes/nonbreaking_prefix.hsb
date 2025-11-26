@@ -40,42 +40,55 @@ xviii
 xix
 xx
 
-# abkuerzungen_voelkel_2005b
-# BB 08.09.2022 fehlende einbuchstabige Abkürzungen a-z bzw. A-Z ergänzt
+# mod. nach abkuerzungen_voelkel_2005b
 a
 A
-a d
+a.pod
 adj
 adr
-a dr
 adw
-a pod
-a. pod
 apr
 art
+Art
 atd
 awg
 b
 B
-běž. č
-běž. čo
+běž
+biol
 br
 btto
 c
 C
-cand
 č
+ca
+cand
+Chr
+Chr.n
 čo
 d
 D
+d.n
 dct
 dec
 dipl
+Dipl
+Dipl.med
+dipl.med
+Dipl.-biol
+dipl.-biol
+Dipl.-inž
+dipl.-inž
 dir
 dł
-d. n
-dr. h. c
 dr
+Dr
+Dr.h.c
+dr.h.c
+dr.-inž
+Dr.-inž
+dr.med
+Dr.med
 ds
 dupl
 e
@@ -83,8 +96,10 @@ E
 eks
 ekskl
 ekspl
+Ew
 ew.-luth
 ewtl
+Ewtl
 f
 F
 febr
@@ -92,11 +107,17 @@ g
 G
 h
 H
-hł
+H.n
+h.n
 hl
-hl. d
-hl. h
-h. n
+Hl
+hł
+Hł
+Hl.d
+hl.d
+Hl.h
+hl.h
+habil
 hodź
 hs
 i
@@ -106,122 +127,161 @@ imp
 ind
 inf
 inkl
+inž
 j
 J
+J.h
+j.h
 jan
-j. h
 jul
 jun
 k
 K
+Kap
 kap
+Knj
 knj
+Knjež
 knjež
 kol
 kolg
 konj
+Kpł
 kpł
-k r
 l
 L
+lic
+luth
 m
 M
 me
 mě
+med
+mgr
 mio
-mj. dr
+mj
+Mj.dr
+mj.dr
 mjeń
 mł
 mrd
-mgr
 msgr
+mgr
 n
 N
-na př
+n.l.č
+n.mj.m
+N.N
+n.w
+nad
 nar
 nast
+ně
 njedź
-n. l. č
-n. mj. m
-N. N
 now
 ntto
-n. w
 o
 O
 okt
 p
 P
+paed
+phil
 pj
+pod
 podp
-po Chr. n
 pokroč
 póndź
-po n. l. č
-prof
-pr. w
-př. Chr. n
+pr
+př
+př.Chr.n
+př.n.l.č
+pr.w
+Přir
 přir
+Přisp
 přisp
-př. n. l. č
+Prof
+prof
+publ
 q
 Q
 r
 R
-red
-resp
+R.-k
 r.-k
+Red
+red
+reg
+resp
 rodź
 s
 S
 sć
-sć. sć
+sć.sć
 sept
+Skrótš
 skrótš
 sl
-sl. sl
+sl.sl
 sob
 srj
 st
+Str
 str
 stud
+štw
+Sup
 sup
+sw
+Swj
 swj
 swob
-štw
 t
 T
+T.j
+T.mj
+T.r
+T.t
+t.j
+t.l
+t.m
+t.mj
+t.r
+t.t
+Tab
 tab
+Tel
 tel
-t. j
-t. l
-t. m
-t. mj
-t. r
-t. t
+theol
+tys
 u
 U
 v
 V
 w
 W
-w nad
+Wobr
 wobr
+Wotp
 wotp
+Wotrj
 wotrj
 wož
 wu
 wud
-w zast
 x
 X
 y
 Y
 z
 Z
+z.t
+zast
 zemr
+Zeš
 zeš
-z. t
+Zwj
 zwj
 zwud
 
@@ -325,13 +385,47 @@ zwud
 97
 98
 99
+100
+125
+150
+175
+200
+225
+250
+275
+300
+325
+350
+375
+400
+425
+450
+475
+500
+525
+550
+575
+600
+625
+650
+675
+700
+725
+750
+775
+800
+825
+850
+875
+900
+925
+950
+975
 
 # händisch ergänzt
-dr. med
+dr.med
 Dr
-Dr. med
-dipl. med
-# BB 12.03.2022
-dr. h. c
-# JN 19.07.2022
-sw
+Dr.med
+dipl.med
+pod
+tys
