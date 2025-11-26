@@ -15,11 +15,12 @@ de_hsb:
 - 2024-02-28_de2hsb
 - 2024-04-09_hsb2de_de2hsb
 de_dsb:
-- t2k_js_de_dsb_2025-08-01_lmu
 - 2022-02-02_de2dsb
+- t2k_js_de_dsb_2025-08-01_lmu
 dsb_hsb:
 - 2022-02-02_dsb2hsb
 dsb_de:
+- witaj_mm_dsb_2022-09-18_dsb2de
 - 2022-02-02_dsb2de
 dsb_cs:
 - witaj_mm_cs_2023-05-08_dsb2cs
