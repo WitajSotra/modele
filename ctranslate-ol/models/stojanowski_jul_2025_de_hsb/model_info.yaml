@@ -1,7 +1,7 @@
-name: stojanowski_jul_2025_de_hsb
+name: t2k_js_de_hsb_2025-02-17_lmu
 directions:
 - de_hsb
-trainer: Johann Seltmann
+trainer: Hannah Seltmann
 traindate: '2025-07-17'
 ext: true
 aggressive_dash_splits: true
