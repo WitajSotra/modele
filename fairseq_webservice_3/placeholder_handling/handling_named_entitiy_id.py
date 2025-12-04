@@ -93,7 +93,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
     # generator für next available id (als string), überspringt banned und used
     # Die generierten Zahlen sind prefixfrei.
     def next_id():
-        i = 10
+        i = 3
         while True:
             s = str(i)
             if s in banned_digit_sequences or s in used_ids:
