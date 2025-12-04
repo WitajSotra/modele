@@ -192,7 +192,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
             else:
                 # latin/neutral run -> leave for further token-level checks (url/domain/email/number)
                 intermediate.append({'text': substring, 'ne': False})
-
+    #print("Schritt 2 (non-latin): ", intermediate)
     # ---------- Schritt 3: Für alle nicht-NE Fragmente -> Token-Splitting per Leerzeichen (schon segmentiert),
     # aber einzelne parts enthalten bereits keine Whitespace; wir verarbeiten diese non-NE-Parts tokenweise ----------
     final_parts = []
@@ -249,10 +249,11 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
             segment_info["ne"] = False
 
         final_parts.append(segment_info)
-
+    #print("Schritt 3 (NE-Segmente):", final_parts)
     # ---------- Schritt 4: In noch-nicht-NE Fragmenten -> markiere Ziffernfolgen + optionales Interpunktionszeichen (eines aus: “.;-:,”) als NE ----------
     interpunkt = r"[.;\-:,]"
-    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?)(?!-?er|-?tych)", re.IGNORECASE)
+    #digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?)(?!-?er|-?tych)", re.IGNORECASE)
+    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?\d*)(?!-?er|-?tych)", re.IGNORECASE)
 
     processed_parts = []
     for i, item in enumerate(final_parts):
@@ -297,7 +298,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
             processed_parts.append(item)
         else:
             processed_parts.extend(out_fragments)
-
+    #print("Schritt 4 (numbers): ", processed_parts)
     # ---------- Schritt 5: Für alle als NE markierten Fragmente -> ersetze durch Marker ├<type>:<id>┤ ----------
     # Erstelle output-String schrittweise und fülle mapping
     out = []
@@ -325,7 +326,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
         out_text = out_text.replace("┤├", f"┤ ├")
     out_text = out_text.replace("┤", " ")
     out_text = out_text.replace("├", " ")
-
+    #print("mapping: ", mapping)
     # Rückgabe: text mit Markern und mapping
     return out_text, mapping
 
@@ -438,6 +439,8 @@ if __name__ == "__main__":
 		"Bukowc je něhdźe  6km wulka a 88 metrow dołha wjes w formje łanowca (Waldhufendorf) a bu 1280 (mjeno naspomnjenja: Buchinwalde) prěni raz naspomnjeny. Mjeno wjeski pokazuje na sydlišćo při bukowym lěsu. Nimo ryćerkubła běchu 1777 tež hišće 6 burskich statokow, 20 chěžkarjow a 14 zahrodkowych žiwnosćerjow, pola a łuki w Bukowcu. Srjedź 19.lětstotka ležachu wokoło Bukowca 11 hatow z cyłkownej płoninu 40 hektarow a w kotrychž plahowachu so karpy.",
 		"Přejemy wam tež hišće wšo dobre za #20230#, krutu strowotu🍏, wjele lubosće💞 a časa za so a tež wjele wjesela😊 a rjanych dožiwjenjow ze swójbu a přećelemi🫂.",
 		"Wir wünschen euch auch noch alles Gute für #20230#, beste Gesundheit🍏, viel Liebe #22# und Zeit für uns und auch viel Spaß 😊 und schöne Erlebnisse mit Familie und Freunden🫂"
+        "Dafür wird in der Kernzone (ca. 3,7 % der Gesamtfläche) auf jegliche Bewirtschaftung verzichtet und Störungen werden minimiert.",
+        "Die Haushaltsmittel der übrigen Organe belaufen sich für das Jahr 2000 auf 1.286.000.000."
     ]
 
     for test_string in test_strings:

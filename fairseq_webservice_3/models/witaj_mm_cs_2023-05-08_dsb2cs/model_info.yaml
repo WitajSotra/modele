@@ -10,6 +10,7 @@ sentence_splitter_nonbreaking_prefix_files:
   dsb: nonbreaking_prefixes/nonbreaking_prefix.dsb
 escape_xml: false
 placeholder_handling_method: named_entitiy_id
+ne_placeholder_separator:
 trainer: Marko Meškank
 traindate: '2023-05-08'
 return_unks: false

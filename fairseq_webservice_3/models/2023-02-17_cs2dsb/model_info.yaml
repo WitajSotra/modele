@@ -11,6 +11,7 @@ sentence_splitter_nonbreaking_prefix_files:
 protected_pattern_file: nonbreaking_prefixes/protected_pattern
 escape_xml: false
 placeholder_handling_method: named_entitiy_id
+ne_placeholder_separator:
 trainer: Marko Meškank
 traindate: '2023-02-17'
 return_unks: false

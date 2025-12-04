@@ -13,6 +13,7 @@ sentence_splitter_nonbreaking_prefix_files:
 protected_pattern_file: nonbreaking_prefixes/protected_pattern
 escape_xml: false
 placeholder_handling_method: named_entitiy_id
+ne_placeholder_separator:
 trainer: Dario Stojanovski
 traindate: '2022-01-26'
 return_unks: false
