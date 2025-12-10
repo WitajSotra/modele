@@ -14,6 +14,7 @@ RUN pip install youtokentome
 RUN pip install ruamel.yaml
 RUN pip install sentence_splitter
 RUN pip install validators
+RUN pip install urlextract
 
 
 COPY models /app/models

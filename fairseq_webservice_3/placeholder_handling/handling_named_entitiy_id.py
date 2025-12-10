@@ -2,7 +2,7 @@ import re
 import unicodedata
 from typing import Tuple, Dict, Optional, Any
 import validators
-
+from urlextract import URLExtract
 
 
 latin_consonants = (
@@ -70,8 +70,15 @@ ESC_L = "╠"  # pseudo-escaped left marker
 ESC_R = "╣"  # pseudo-escaped right marker
 
 
+extractor = URLExtract()
+extractor.update_when_older(7)
 
-
+def check_url_urlextract(text):
+    urls = extractor.find_urls(text)
+    if len(urls) > 0 and urls[0] == text:
+        return True
+    else:
+        return False
 
 
 def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tuple[str, Dict[str, Dict[str, Any]]]:
@@ -234,14 +241,18 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
                 segment_info["ne"] = True
                 segment_info["type"] = "email"
                 checked_as_ne = True
-            elif validators.url(token_body):
+            if check_url_urlextract(token_body):
                 segment_info["ne"] = True
                 segment_info["type"] = "url"
                 checked_as_ne = True
-            elif validators.domain(token_body):
-                segment_info["ne"] = True
-                segment_info["type"] = "domain"
-                checked_as_ne = True
+            #elif validators.url(token_body):
+            #    segment_info["ne"] = True
+            #    segment_info["type"] = "url"
+            #    checked_as_ne = True
+            #elif validators.domain(token_body, consider_tld=True):
+            #    segment_info["ne"] = True
+            #    segment_info["type"] = "domain"
+            #    checked_as_ne = True
 
         if not checked_as_ne:
             # Wenn nicht als NE erkannt, füge ursprünglichen Token (inkl. trailing) als nicht-NE ein --
@@ -425,29 +436,44 @@ def remove_markers(text_with_markers: str,
 
 
 if __name__ == "__main__":
+
     test_strings = [
-		"hallo 1.1 2",
-		"hallo  1.1  2",
-		"1<unk>witaj</unk>👨🧑(🥪). Dies ist test🥪a bernhard.baier@gmx.net. 1.",
-		"bernhard1@gmx.net ;a543..4;:8-asasa123123",
-		"bernhard1@gmx.net a543;5..3asasa123123",
-		"dorostowa dźěłarnička a 25. lětne zeńdźenje dźěłoweho kruha za nakrajne rumy Němskeje towaršnosće za geografiju – zhromadne zarjadowanje ze Serbskim institutom.",
-		" dźěłarnička a 25. lětne geografiju – zhromadne ;",
-		"a543asasa123123",
-		"<unk>witaj</unk>👨🧑(🥪). Dies ist test🥪a",
-		"<unk>witaj</unk>👨🧑(🥪). Dies ist test🥪a bernhard.baier@gmx1.net. 47hallo11",
-		"Bukowc je něhdźe  6km wulka a 88 metrow dołha wjes w formje łanowca (Waldhufendorf) a bu 1280 (mjeno naspomnjenja: Buchinwalde) prěni raz naspomnjeny. Mjeno wjeski pokazuje na sydlišćo při bukowym lěsu. Nimo ryćerkubła běchu 1777 tež hišće 6 burskich statokow, 20 chěžkarjow a 14 zahrodkowych žiwnosćerjow, pola a łuki w Bukowcu. Srjedź 19.lětstotka ležachu wokoło Bukowca 11 hatow z cyłkownej płoninu 40 hektarow a w kotrychž plahowachu so karpy.",
-		"Přejemy wam tež hišće wšo dobre za #20230#, krutu strowotu🍏, wjele lubosće💞 a časa za so a tež wjele wjesela😊 a rjanych dožiwjenjow ze swójbu a přećelemi🫂.",
-		"Wir wünschen euch auch noch alles Gute für #20230#, beste Gesundheit🍏, viel Liebe #22# und Zeit für uns und auch viel Spaß 😊 und schöne Erlebnisse mit Familie und Freunden🫂"
+        "Pod linkom xoyondo.com/dp/KnyNKfmxYOhLkO8 je pola 13. septembra hóčka."
+        #"Z pisanym ćahom su wobydlerjo, towarstwa, dźěłarnistwa, iniciatiwy a dobroćelske zwjazki wčera w Budyšinje přećiwo prawicarskemu ekstremizmej demonstrowali.Jich podpěraše Drježdźanska kapała Banda Comunale z hudźbu."
+    ]
+
+    test_strings = [
+        "Srjedź 19.lětst. ležachu",
+        "hallo 1.1 2",
+        "hallo  1.1  2",
+        "1<unk>witaj</unk>👨🧑(🥪). Dies ist test🥪a bernhard.baier@gmx.net. 1.",
+        "bernhard1@gmx.net ;a543..4;:8-asasa123123",
+        "bernhard1@gmx.net a543;5..3asasa123123",
+        "dorostowa dźěłarnička a 25. lětne zeńdźenje dźěłoweho kruha za nakrajne rumy Němskeje towaršnosće za geografiju – zhromadne zarjadowanje ze Serbskim institutom.",
+        " dźěłarnička a 25. lětne geografiju – zhromadne ;",
+        "a543asasa123123",
+        "<unk>witaj</unk>👨🧑(🥪). Dies ist test🥪a",
+        "<unk>witaj</unk>👨🧑(🥪). Dies ist test🥪a bernhard.baier@gmx1.net. 47hallo11",
+        "Bukowc je něhdźe  6km wulka a 88 metrow dołha wjes w formje łanowca (Waldhufendorf) a bu 1280 (mjeno naspomnjenja: Buchinwalde) prěni raz naspomnjeny. Mjeno wjeski pokazuje na sydlišćo při bukowym lěsu. Nimo ryćerkubła běchu 1777 tež hišće 6 burskich statokow, 20 chěžkarjow a 14 zahrodkowych žiwnosćerjow, pola a łuki w Bukowcu. Srjedź 19.lětstotka ležachu wokoło Bukowca 11 hatow z cyłkownej płoninu 40 hektarow a w kotrychž plahowachu so karpy.",
+        "Přejemy wam tež hišće wšo dobre za #20230#, krutu strowotu🍏, wjele lubosće💞 a časa za so a tež wjele wjesela😊 a rjanych dožiwjenjow ze swójbu a přećelemi🫂.",
+        "Wir wünschen euch auch noch alles Gute für #20230#, beste Gesundheit🍏, viel Liebe #22# und Zeit für uns und auch viel Spaß 😊 und schöne Erlebnisse mit Familie und Freunden🫂"
         "Dafür wird in der Kernzone (ca. 3,7 % der Gesamtfläche) auf jegliche Bewirtschaftung verzichtet und Störungen werden minimiert.",
         "Die Haushaltsmittel der übrigen Organe belaufen sich für das Jahr 2000 auf 1.286.000.000."
     ]
+
+    #test_strings = [
+    #    "Z pisanym ćahom su wobydlerjo, towarstwa, dźěłarnistwa, iniciatiwy a dobroćelske zwjazki wčera w Budyšinje přećiwo prawicarskemu ekstremizmej demonstrowali.Jich podpěraše Drježdźanska kapała Banda Comunale z hudźbu.",
+    #    "Mjez nimi bě tójšto Serbow.Budyšin (SN/at). „Chcemy znowa znamjo stajić za wotewrjeny Budyšin a stejimy za solidaritu, swobodu, čłowjeske prawa“, rěkaše w namołwje zwjazkarstwa tvBunt.",
+    #    "A tomu přichwatani wotpowědowachu.Hłowny adresat mnohich protestnych plakatow bě strona AfD.",
+    #    "Mjeztym su zamołwići za 43 projektow cyłkownje 341 000 eurow nazběrali, z čehož profitowachu tež wjele naprawow w serbskich wjeskach.Budyšin (SN/BŠe)."
+    #]
 
     for test_string in test_strings:
         print(test_string)
         print("-------------\nescaped:")
         escaped, mapping = set_markers(test_string)
         print(escaped)
+        print(mapping)
         print("-------------\nbacktranslated:")
         print(remove_markers(escaped, mapping))
         print("\n\n\n")

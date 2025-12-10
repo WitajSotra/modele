@@ -120,6 +120,7 @@ class model:
 		fakeperiod = sentence and not unicodedata.category(sentence[-1]).startswith("P")
 		if fakeperiod: sentence += '.'
 		sentence, markers_information = set_markers(sentence, self.placeholder_method, self.ne_placeholder_separator)
+		sentence = re.sub(r'\.(?=\w)', '. ', sentence)
 		logger.info(f"marked sentence: {sentence}")
 		logger.info(f"marker info: {markers_information}")
 		tok_sentence = self.tokenizers[src].tokenize(sentence,
