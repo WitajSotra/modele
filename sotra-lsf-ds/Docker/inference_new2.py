@@ -9,7 +9,7 @@ import os
 import re
 
 
-version = "1.2.5 2025-08-23"
+version = "1.2.6 2025-12-17"
 
 os.environ["MKL_CBWR"] = "AUTO,STRICT"
 #os.environ["MKL_CBWR"] = "COMPATIBLE"
@@ -30,13 +30,14 @@ class FairseqCTranslateRunner:
         #self.modeldir4 = "witaj_ol_hsb_de_2023-02-26/"
         #self.modeldir5 = "witaj_ol_hsb_de_2023-02-28/"
         self.modeldir6 = "witaj_mm_cs_2023-05-08/"
+        self.modeldir7 = "t2k_js_de_hsb_2025-07-17_lmu"
         
         self.modelpath_default = {
             "hsb_de": self.modeldir1+"hsb2de/",
             "hsb_dsb": self.modeldir1+"hsb2dsb/",
             "dsb_de": self.modeldir2+"dsb2de/",
             "dsb_hsb": self.modeldir1+"dsb2hsb/",
-            "de_hsb": self.modeldir1+"de2hsb/",
+            "de_hsb": self.modeldir7+"de2hsb/",
             "de_dsb": self.modeldir1+"de2dsb/",            
             "cs_hsb": self.modeldir3+"cs2hsb/",
             "cs_dsb": self.modeldir3+"cs2dsb/",
@@ -46,6 +47,7 @@ class FairseqCTranslateRunner:
 
         self.modelpath_test = {
           # "hsb_de": self.modeldir5+"hsb2de/",
+            "de_hsb": self.modeldir1+"de2hsb/",
         }
         #fname=self.modeldir+self.modeldir4+"hsb2de/"
         #print(fname)
