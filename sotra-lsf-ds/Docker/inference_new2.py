@@ -30,7 +30,7 @@ class FairseqCTranslateRunner:
         #self.modeldir4 = "witaj_ol_hsb_de_2023-02-26/"
         #self.modeldir5 = "witaj_ol_hsb_de_2023-02-28/"
         self.modeldir6 = "witaj_mm_cs_2023-05-08/"
-        self.modeldir7 = "t2k_js_de_hsb_2025-07-17_lmu"
+        self.modeldir7 = "t2k_js_de_hsb_2025-07-17_lmu/"
         
         self.modelpath_default = {
             "hsb_de": self.modeldir1+"hsb2de/",
