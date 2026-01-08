@@ -27,8 +27,8 @@ regex_satzzeichen = r"[.;,?!:-]"
 #)
 
 regex_interpunktion_nicht_satzzeichen = (
-    #r"[\-/()<>=´`\+\*\~:_\^«»‘’‚‛“”„‟‹›'@]" #
-    r"[\-/()<>=\+\*\~:_\^‚‛'@]" #
+    r'[\-/()<>=´`\+\*\~:_\^«»‘’‚‛“”„‟‹›\'@"]' #
+    #r"[\-/()<>=\+\*\~:_\^‚‛'@]" #
 )
 
 regex_latin_plus_interpunktion = (
@@ -263,8 +263,11 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
     #print("Schritt 3 (NE-Segmente):", final_parts)
     # ---------- Schritt 4: In noch-nicht-NE Fragmenten -> markiere Ziffernfolgen + optionales Interpunktionszeichen (eines aus: “.;-:,”) als NE ----------
     interpunkt = r"[.;\-:,]"
-    #digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?)(?!-?er|-?tych)", re.IGNORECASE)
-    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?\d*)(?!-?er|-?tych)", re.IGNORECASE)
+
+    # Digit pattern for numbers with or without interpunction
+    # digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?\d*)(?!-?er|-?tych)", re.IGNORECASE)
+    # Digit pattern only for numbers with interpunction
+    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})\d*)(?!-?er|-?tych)", re.IGNORECASE)
 
     processed_parts = []
     for i, item in enumerate(final_parts):
@@ -466,6 +469,12 @@ if __name__ == "__main__":
     #    "Mjez nimi bě tójšto Serbow.Budyšin (SN/at). „Chcemy znowa znamjo stajić za wotewrjeny Budyšin a stejimy za solidaritu, swobodu, čłowjeske prawa“, rěkaše w namołwje zwjazkarstwa tvBunt.",
     #    "A tomu přichwatani wotpowědowachu.Hłowny adresat mnohich protestnych plakatow bě strona AfD.",
     #    "Mjeztym su zamołwići za 43 projektow cyłkownje 341 000 eurow nazběrali, z čehož profitowachu tež wjele naprawow w serbskich wjeskach.Budyšin (SN/BŠe)."
+    #]
+    #test_strings = ["'Hallo an alle'"]
+
+    #test_strings = [
+    #    "Hallo 1234 blub",
+    #    "Hallo 12,34 blub"
     #]
 
     for test_string in test_strings:
