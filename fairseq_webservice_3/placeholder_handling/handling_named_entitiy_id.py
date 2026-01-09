@@ -392,7 +392,8 @@ def remove_markers(text_with_markers: str,
     intermediate = ""
     skip_next_space = False
 
-    for ch in text_with_markers:
+    len_text = len(text_with_markers)
+    for i, ch in enumerate(text_with_markers):
 
         if skip_next_space:
             skip_next_space = False
@@ -409,10 +410,16 @@ def remove_markers(text_with_markers: str,
                 restored = restored[:-1]
 
         intermediate += ch
+        if ch.isdigit() and i < len_text -1 :
+            continue
 
         ids_to_search = list(mapping.keys())
         for _id in ids_to_search:
-            pattern = re.compile(rf"(\s?)({_id})(\s?)([\".,])?")
+            #pattern = re.compile(rf"(\s?)({_id})(\s?)([\".,])?")
+            pattern = re.compile(
+                rf"(\s?)({_id})(\s?)([\".,])?(?!\d)"
+            )
+
             if re.search(pattern, intermediate):
                 intermediate_restored = pattern.sub(repl, intermediate)
                 if restored != "" and restored[-1].isspace() \
@@ -426,7 +433,7 @@ def remove_markers(text_with_markers: str,
                 break
 
     restored += intermediate
-        
+
 
     restored = restored.replace(ESC_L, "├").replace(ESC_R, "┤")
     if ne_placeholder_separator:
@@ -474,10 +481,13 @@ if __name__ == "__main__":
     #]
     #test_strings = ["'Hallo an alle'"]
 
-    #test_strings = [
-    #    "Hallo 1234 blub",
-    #    "Hallo 12,34 blub"
-    #]
+    test_strings = [
+        "Hallo 1234 blub",
+        "Hallo 12,34 blub",
+        "tel.: + 49 (0) 43510576432 e-mail: hello@test.de"
+    ]
+
+
 
     for test_string in test_strings:
         print(test_string)
