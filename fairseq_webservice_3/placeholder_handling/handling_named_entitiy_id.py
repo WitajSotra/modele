@@ -410,7 +410,8 @@ def remove_markers(text_with_markers: str,
 
         intermediate += ch
 
-        for _id in mapping:
+        ids_to_search = list(mapping.keys())
+        for _id in ids_to_search:
             pattern = re.compile(rf"(\s?)({_id})(\s?)([\".,])?")
             if re.search(pattern, intermediate):
                 intermediate_restored = pattern.sub(repl, intermediate)
@@ -421,6 +422,7 @@ def remove_markers(text_with_markers: str,
                 intermediate = ""
                 if not mapping[_id].get("space_after", True):
                     skip_next_space = True
+                del mapping[_id]
                 break
 
     restored += intermediate
