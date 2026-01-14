@@ -219,6 +219,7 @@ ns
 geb
 dt
 bspw
+max
 
 #Number indicators
 # add #NUMERIC_ONLY# after the word if it should ONLY be non-breaking when a 0-9 digit follows it
