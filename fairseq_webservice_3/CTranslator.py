@@ -12,6 +12,7 @@ from placeholder_handling import set_markers, unset_markers
 os.environ["MKL_CBWR"] = "AUTO,STRICT" # Batchtranslations sollen nicht von der Übersetzung einzelner Sätze abweichen
 
 
+
 def set_version(vstore):
 	import datetime
 	version = open(vstore, 'r').readline()

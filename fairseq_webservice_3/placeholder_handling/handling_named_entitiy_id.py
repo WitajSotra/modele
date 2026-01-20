@@ -21,6 +21,8 @@ regex_spaces = r"\s\u00A0"   # whitespace plus NBSP
 regex_brackets = r"(){}\[\]"
 regex_satzzeichen = r"[.;,?!:-]"
 
+regex_non_breaking_char = re.compile("\u202F")
+
 #regex_interpunktion_nicht_satzzeichen = (
 #    r"\-/()<>=´`'\"\+\*\~:_\^"
 #    + r"«»‘’‚‛“”„‟‹›"
@@ -100,7 +102,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
     # generator für next available id (als string), überspringt banned und used
     # Die generierten Zahlen sind prefixfrei.
     def next_id():
-        i = 3
+        i = 0
         while True:
             s = str(i)
             if s in banned_digit_sequences or s in used_ids:
@@ -122,11 +124,13 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
 
     def is_non_latin_char(ch: str) -> bool:
         # treat punctuation etc. as latin
+        if re.match(regex_non_breaking_char, ch):
+            return True
         if re.match(regex_satzzeichen, ch):
             return False
         if re.match(regex_interpunktion_nicht_satzzeichen, ch):
             return False
-        if re.match(r"[0-9]", ch):
+        if re.match(r"[0-9$€]", ch):
             return False
         try:
             nm = unicodedata.name(ch)
@@ -160,7 +164,8 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
 
 
     # ---------- Pipeline: split input preserving whitespace ----------
-    parts = re.split(r"(\s+)", text_ps)  # Teile: tokens oder whitespace (whitespace in odd indices)
+    parts = re.split(r"((?!\u202F)\s+)", text_ps)
+    print(parts)
 
     # Wir bauen eine Liste result_parts, in der für jedes parts[i] entweder:
     # - a) {'text': original, 'ne': False}
@@ -168,7 +173,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
     intermediate = []
 
     for j, p in enumerate(parts):
-        if p.isspace() or p == "":
+        if (p.isspace() or p == "") and not "\u202F" in p:
             intermediate.append({'text': p, 'ne': False})
             continue
         # p is a non-whitespace block; we will split it into latin/nonlatin runs
@@ -267,7 +272,7 @@ def set_markers(text: str, ne_placeholder_separator: Optional[str]=None) -> Tupl
     # Digit pattern for numbers with or without interpunction
     # digit_pattern = re.compile(rf"(\d+(?:{interpunkt})?\d*)(?!-?er|-?tych)", re.IGNORECASE)
     # Digit pattern only for numbers with interpunction
-    digit_pattern = re.compile(rf"(\d+(?:{interpunkt})\d*)(?!-?er|-?tych)", re.IGNORECASE)
+    digit_pattern = re.compile(rf"((\d+(?:{interpunkt}))+\d*)(?!-?er|-?tych)", re.IGNORECASE)
 
     processed_parts = []
     for i, item in enumerate(final_parts):
@@ -376,12 +381,15 @@ def remove_markers(text_with_markers: str,
             else:
                 text = text + interpunction_after
             return text
-            
+
         return str(val)
 
     def repl(m: re.Match) -> str:
-        id_str = m.group(2)
-        interpunction_after = m.group(4)
+        print(m.groups())
+        #id_str = m.group(2)
+        id_str = m.group(1)
+        #interpunction_after = m.group(4)
+        interpunction_after = m.group(3)
         orig = _get_original_for_id(id_str, interpunction_after)
         if orig is None:
             # strict was False and id not found -> leave the digit sequence unchanged
@@ -413,14 +421,16 @@ def remove_markers(text_with_markers: str,
         if ch.isdigit() and i < len_text -1 :
             continue
 
-        ids_to_search = list(mapping.keys())
+        ids_to_search = [int(key) for key in mapping.keys()]
+        ids_to_search = sorted(ids_to_search)
         for _id in ids_to_search:
-            #pattern = re.compile(rf"(\s?)({_id})(\s?)([\".,])?")
+            _id = str(_id)
             pattern = re.compile(
-                rf"(\s?)({_id})(\s?)([\".,])?(?!\d)"
+                rf"(?<!\d)({_id})(\s?)([\".,])?(?!\d)"
             )
 
             if re.search(pattern, intermediate):
+                #print("intermediate", intermediate)
                 intermediate_restored = pattern.sub(repl, intermediate)
                 if restored != "" and restored[-1].isspace() \
                     and intermediate_restored != "" and intermediate_restored[0].isspace():
@@ -430,20 +440,15 @@ def remove_markers(text_with_markers: str,
                 if not mapping[_id].get("space_after", True):
                     skip_next_space = True
                 del mapping[_id]
+                #print("intermediate restored", intermediate_restored)
                 break
-
     restored += intermediate
 
 
     restored = restored.replace(ESC_L, "├").replace(ESC_R, "┤")
     if ne_placeholder_separator:
         restored = restored.replace(ne_placeholder_separator, "")
-    #if restore_pseudo_escapes:
-    #    restored = restored.replace(esc_left, "├").replace(esc_right, "┤")
-
-
-
-
+    
     return restored
 
 
@@ -470,7 +475,11 @@ if __name__ == "__main__":
         "Přejemy wam tež hišće wšo dobre za #20230#, krutu strowotu🍏, wjele lubosće💞 a časa za so a tež wjele wjesela😊 a rjanych dožiwjenjow ze swójbu a přećelemi🫂.",
         "Wir wünschen euch auch noch alles Gute für #20230#, beste Gesundheit🍏, viel Liebe #22# und Zeit für uns und auch viel Spaß 😊 und schöne Erlebnisse mit Familie und Freunden🫂"
         "Dafür wird in der Kernzone (ca. 3,7 % der Gesamtfläche) auf jegliche Bewirtschaftung verzichtet und Störungen werden minimiert.",
-        "Die Haushaltsmittel der übrigen Organe belaufen sich für das Jahr 2000 auf 1.286.000.000."
+        "Die Haushaltsmittel der übrigen Organe belaufen sich für das Jahr 2000 auf 1.286.000.000.",
+        "Hallo 1234 blub",
+        "Hallo 12,34 blub",
+        "tel.: + 49 (0) 43510576432 e-mail: hello@test.de"
+        " Im Jahr 2024 wurden weltweit über 950.000.000.000$ in digitale Infrastruktur investiert."
     ]
 
     #test_strings = [
@@ -482,11 +491,10 @@ if __name__ == "__main__":
     #test_strings = ["'Hallo an alle'"]
 
     test_strings = [
-        "Hallo 1234 blub",
-        "Hallo 12,34 blub",
-        "tel.: + 49 (0) 43510576432 e-mail: hello@test.de"
+        #"Die Gesamtkosten des Bauprojekts belaufen sich laut aktuellen Schätzungen auf 2.450.000.000€."
+        #"Für den Zeitraum 2023 bis 2027 sind zusätzliche 3100000000  CHF für die nationale Sicherheitsstrategie vorgesehen."
+        "00  CHF"
     ]
-
 
 
     for test_string in test_strings:
