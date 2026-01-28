@@ -437,8 +437,8 @@ def remove_markers(text_with_markers: str,
                     intermediate_restored = intermediate_restored[1:]
                 restored += intermediate_restored
                 intermediate = ""
-                if not mapping[_id].get("space_after", True):
-                    skip_next_space = True
+                #if not mapping[_id].get("space_after", True):
+                #    skip_next_space = True
                 del mapping[_id]
                 #print("intermediate restored", intermediate_restored)
                 break
@@ -449,6 +449,8 @@ def remove_markers(text_with_markers: str,
     if ne_placeholder_separator:
         restored = restored.replace(ne_placeholder_separator, "")
     
+    restored = re.sub(r"\s\s", " ", restored)
+
     return restored
 
 

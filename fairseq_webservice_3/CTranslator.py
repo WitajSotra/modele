@@ -23,6 +23,7 @@ def set_version(vstore):
 		with open(vstore, 'w') as f: f.write(version)
 	return version
 
+# Comment added to trigger version update
 
 import ctranslate2, logging
 ctranslate2.set_log_level(logging.INFO)
