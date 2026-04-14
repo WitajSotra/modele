@@ -18,8 +18,8 @@ class FairseqCTranslateRunner:
 
     def __init__(self) -> None:
 
-        self.verbose = 0
-        #self.verbose = 1
+        #self.verbose = 0
+        self.verbose = 1
 
         self.debug_info = True # Es werden in der Response zusätzliche interne Datenausgaben der Translate-Pipeline zurückgeliefert
 
@@ -185,7 +185,7 @@ class FairseqCTranslateRunner:
 
             translations = []
             translations = translator[direction].translate_batch(
-                sentences, replace_unknowns=True)
+                sentences, replace_unknowns=True, return_scores=False)
 
             translations_debpe_pp = ''
             if self.verbose > 0 or self.debug_info:
@@ -270,30 +270,42 @@ if __name__ == "__main__":
     @app.route('/translate', methods=['POST'])
     def translate():
 
-        if runner.verbose > 0:
-            print("\nrequest", request, "\n")
-        if request.json != None:
-            print("\nrequest", request.json, "\n")
+        try:
+            if runner.verbose > 0:
+                print("\nrequest", request, "\n")
+            if request.json != None:
+                print("\nrequest", request.json, "\n")
 
-        if request.json is None or 'text' not in request.json:
-            return {'error': '"text" field in JSON payload is required'}, 400
+            if request.json is None or 'text' not in request.json:
+                return {'error': '"text" field in JSON payload is required'}, 400
 
-        text = request.json.get('text')
-        src_lng = request.json.get('source_language', '')
-        trg_lng = request.json.get('target_language', '')
+            text = request.json.get('text')
 
-        model_env = request.json.get('model_env', '')
+            if len(text) > 6000:
+                return {'error': 'Text is longer than 6000 characters.'}, 400
 
-        result = runner.translate(text, src_lng, trg_lng, model_env)
-        errormsg = result[6]
-        ok = True
-        if errormsg != None:
-            ok = False
-        retval = {'ok': ok, 'translation': result[0], 'marked_input': result[1], 'marked_translation': result[2],
-                  'ctranslate2_input': result[3], 'ctranslate2_output': result[4], 'model': result[5]}
-        if errormsg != None:
-            retval['errormsg'] = errormsg
-        return retval
+
+            src_lng = request.json.get('source_language', '')
+            trg_lng = request.json.get('target_language', '')
+
+            model_env = request.json.get('model_env', '')
+            result = runner.translate(text, src_lng, trg_lng, model_env)
+            errormsg = result[6]
+            ok = True
+            if errormsg != None:
+                ok = False
+            retval = {'ok': ok, 'translation': result[0], 'marked_input': result[1], 'marked_translation': result[2],
+                    'ctranslate2_input': result[3], 'ctranslate2_output': result[4], 'model': result[5]}
+            if errormsg != None:
+                retval['errormsg'] = errormsg
+            return retval
+        except Exception as e:
+            retval = {"ok": False, "translation": "", "marked_input": "", "marked_translation": "", 
+                      "ctranslate2_input": "", "ctranslate2_output": "", "model": "",
+                      "errormsg": f"There was an error: {e}"}
+            return retval
+
+
 
     @app.route('/info')
     def info():

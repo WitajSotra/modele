@@ -176,7 +176,7 @@ class model:
 									   for (result, fakeperiod, markers_information) in postprocess_arguments]
 		
 		translations, translations_vocabs = zip(*processed_translation_information)
-		
+
 		for translation_vocabs in translations_vocabs:
 			vocabs.update(translation_vocabs)
 
@@ -220,62 +220,66 @@ CORS(app)
 
 @app.route('/translate', methods=['POST'])
 def translate_text():
-	reqdata = request.get_json()
-	wrong_params = set(reqdata.keys()) - {'source_language', 'target_language', 'model', 'text', 'debug'}
-	if wrong_params: return { "errormsg": f'wrong parameter{"s" if len(wrong_params)>1 else ""} {" ".join(wrong_params)}' }
+	try:
+		reqdata = request.get_json()
+		wrong_params = set(reqdata.keys()) - {'source_language', 'target_language', 'model', 'text', 'debug'}
+		if wrong_params: return { "errormsg": f'wrong parameter{"s" if len(wrong_params)>1 else ""} {" ".join(wrong_params)}' }
 
-	src = reqdata.get('source_language')
-	if src is None: return { "errormsg": 'missing source language' }
-	if not src in valid_sources: return { "errormsg": f'{src} is not a valid source language' }
+		src = reqdata.get('source_language')
+		if src is None: return { "errormsg": 'missing source language' }
+		if not src in valid_sources: return { "errormsg": f'{src} is not a valid source language' }
 
-	tgt = reqdata.get('target_language')
-	if tgt is None: return { "errormsg": 'missing target language' }
-	if not tgt in valid_targets: return { "errormsg": f'{tgt} is not a valid target language' }
+		tgt = reqdata.get('target_language')
+		if tgt is None: return { "errormsg": 'missing target language' }
+		if not tgt in valid_targets: return { "errormsg": f'{tgt} is not a valid target language' }
 
-	direction = src + '_' + tgt
-	if not direction in valid_directions: return { "errormsg": f'translations from {src} to {tgt} are not supported' }
+		direction = src + '_' + tgt
+		if not direction in valid_directions: return { "errormsg": f'translations from {src} to {tgt} are not supported' }
 
-	modelname = reqdata.get('model')
-	if modelname is None:
-		model = models[gui_models[direction]]
-	else:
-		if modelname in modelnames:
-			model = models[modelname]
-			if not direction in model.directions: return { "errormsg": f"wrong combination: model {modelname} doesn't support direction {direction}" }
+		modelname = reqdata.get('model')
+		if modelname is None:
+			model = models[gui_models[direction]]
 		else:
-			return { "errormsg": f'model {modelname} is not available' }
+			if modelname in modelnames:
+				model = models[modelname]
+				if not direction in model.directions: return { "errormsg": f"wrong combination: model {modelname} doesn't support direction {direction}" }
+			else:
+				return { "errormsg": f'model {modelname} is not available' }
 
-	text = reqdata.get('text')
-	if text is None or len(str(text)) == 0: return { "errormsg": 'nothing to do' }
-	if not type(text) is str: return { "errormsg": f"'text': wrong type {type(text)}" }
+		text = reqdata.get('text')
+		if text is None or len(str(text)) == 0: return { "errormsg": 'nothing to do' }
+		if not type(text) is str: return { "errormsg": f"'text': wrong type {type(text)}" }
+		if len(text) > 6000:
+			return {"errormsg": "Text is longer than 6000 characters."}
 
-	debug = reqdata.get('debug')
-	if debug is not None:
-		if not type(debug) is bool : return { "errormsg": f"'debug': you specified {debug} ({type(debug)}) but 'debug' should be true or false" }
-		if debug: return { "errormsg": "content for option 'debug' not specified => no operation so far" }
+		debug = reqdata.get('debug')
+		if debug is not None:
+			if not type(debug) is bool : return { "errormsg": f"'debug': you specified {debug} ({type(debug)}) but 'debug' should be true or false" }
+			if debug: return { "errormsg": "content for option 'debug' not specified => no operation so far" }
 
-	input = [list(model.s_split(src, line)) if len(line) else [] for line in prepareTranslationInputText(text).rstrip().split('\n')]
+		input = [list(model.s_split(src, line)) if len(line) else [] for line in prepareTranslationInputText(text).rstrip().split('\n')]
+		sentences_and_line_numbers = [(sentence, i) for (i, line) in enumerate(input) for sentence in line]
+		sentences, line_numbers = zip(*sentences_and_line_numbers)
 
-	sentences_and_line_numbers = [(sentence, i) for (i, line) in enumerate(input) for sentence in line]
-	sentences, line_numbers = zip(*sentences_and_line_numbers)
+		translations, vocabs = model.translate_sentences(sentences, src, tgt)
 
-	translations, vocabs = model.translate_sentences(sentences, src, tgt)
+		lines_dict = defaultdict(list)
+		for translation, line in zip(translations, line_numbers):
+			lines_dict[line].append(translation)
 
-	lines_dict = defaultdict(list)
-	for translation, line in zip(translations, line_numbers):
-		lines_dict[line].append(translation)
-
-	# Convert dict to list of lists (sorted by line number if needed)
-	highest_line_num = max(lines_dict.keys())
-	output = [lines_dict[i] for i in range(highest_line_num+1)]
+		# Convert dict to list of lists (sorted by line number if needed)
+		highest_line_num = max(lines_dict.keys())
+		output = [lines_dict[i] for i in range(highest_line_num+1)]
 
 
-	return {
-		"marked_input": input,
-		"marked_translation": output,
-		"model": model.name,
-		"unks": list(vocabs-model.vocabs) if model.return_unks else []
-	}
+		return {
+			"marked_input": input,
+			"marked_translation": output,
+			"model": model.name,
+			"unks": list(vocabs-model.vocabs) if model.return_unks else []
+		}
+	except Exception as e:
+		return {"errormsg": f"There was an error: {e}"}
 
 @app.route('/info', methods=['GET'])
 def info():
