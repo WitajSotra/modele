@@ -281,8 +281,8 @@ if __name__ == "__main__":
 
             text = request.json.get('text')
 
-            if len(text) > 6000:
-                return {'error': 'Text is longer than 6000 characters.'}, 400
+            if len(text) > 50000:
+                return {'error': 'Text is longer than 50000 characters.'}, 400
 
 
             src_lng = request.json.get('source_language', '')

@@ -249,8 +249,8 @@ def translate_text():
 		text = reqdata.get('text')
 		if text is None or len(str(text)) == 0: return { "errormsg": 'nothing to do' }
 		if not type(text) is str: return { "errormsg": f"'text': wrong type {type(text)}" }
-		if len(text) > 6000:
-			return {"errormsg": "Text is longer than 6000 characters."}
+		if len(text) > 50000:
+			return {"errormsg": "Text is longer than 50000 characters."}
 
 		debug = reqdata.get('debug')
 		if debug is not None:
