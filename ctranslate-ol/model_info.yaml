@@ -1,0 +1,10 @@
+name: witaj_ol_hsb_de_de_hsb_2024-04-09
+directions:
+- hsb_de
+- de_hsb
+trainer: Olaf Langner
+traindate: '2024-04-09'
+ext: true
+aggressive_dash_splits: true
+BLEU_score: 62.32
+TER_score: 24.3542
